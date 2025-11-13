@@ -1,0 +1,112 @@
+[
+  {
+    "id": "espresso",
+    "sku": "CAF-ESP",
+    "price": 2.5,
+    "image": "https://images.unsplash.com/photo-1498804103079-a6351b050096?auto=format&fit=crop&w=800&q=80",
+    "category": "coffee",
+    "tags": ["signature", "quick"],
+    "translations": {
+      "en": {
+        "name": "Signature Espresso",
+        "description": "A double shot of Arabica beans roasted in Paris for a smooth, intense pick-me-up.",
+        "composition": "Arabica espresso",
+        "allergens": []
+      },
+      "fr": {
+        "name": "Espresso Signature",
+        "description": "Double shot de grains arabica torréfiés à Paris pour un réveil intense et soyeux.",
+        "composition": "Espresso arabica",
+        "allergens": []
+      }
+    }
+  },
+  {
+    "id": "croissant",
+    "sku": "CAF-CRS",
+    "price": 3.2,
+    "image": "https://images.unsplash.com/photo-1470124182917-cc6e71b22ecc?auto=format&fit=crop&w=800&q=80",
+    "category": "pastries",
+    "tags": ["buttery", "classic"],
+    "translations": {
+      "en": {
+        "name": "AOP Butter Croissant",
+        "description": "Flaky viennoiserie layered with Brittany AOP butter, baked fresh hourly.",
+        "composition": "Wheat flour, butter, milk, yeast, sugar, salt",
+        "allergens": ["gluten", "milk"]
+      },
+      "fr": {
+        "name": "Croissant au beurre AOP",
+        "description": "Viennoiserie feuilletée au beurre AOP de Bretagne, cuite chaque heure.",
+        "composition": "Farine de blé, beurre, lait, levure, sucre, sel",
+        "allergens": ["gluten", "lait"]
+      }
+    }
+  },
+  {
+    "id": "tartine",
+    "sku": "CAF-TRT",
+    "price": 9.5,
+    "image": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80",
+    "category": "plates",
+    "tags": ["lunch", "vegetarian"],
+    "translations": {
+      "en": {
+        "name": "Provençal Tartine",
+        "description": "Toasted levain with confit tomatoes, chèvre frais, basil oil, and micro greens.",
+        "composition": "Levain bread, confit tomatoes, goat cheese, basil oil, greens",
+        "allergens": ["gluten", "milk"]
+      },
+      "fr": {
+        "name": "Tartine Provençale",
+        "description": "Levain toasté, tomates confites, chèvre frais, huile de basilic et pousses.",
+        "composition": "Pain levain, tomates confites, fromage de chèvre, huile de basilic, pousses",
+        "allergens": ["gluten", "lait"]
+      }
+    }
+  },
+  {
+    "id": "salade",
+    "sku": "CAF-SLD",
+    "price": 12.8,
+    "image": "https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=800&q=80",
+    "category": "plates",
+    "tags": ["seasonal", "gluten-free"],
+    "translations": {
+      "en": {
+        "name": "Marais Market Salad",
+        "description": "Seasonal greens, citrus segments, toasted seeds, chèvre, and verjus vinaigrette.",
+        "composition": "Greens, citrus, seeds, goat cheese, verjus vinaigrette",
+        "allergens": ["seeds", "milk"]
+      },
+      "fr": {
+        "name": "Salade du Marché du Marais",
+        "description": "Verdure de saison, agrumes, graines toastées, chèvre et vinaigrette au verjus.",
+        "composition": "Verdure, agrumes, graines, fromage de chèvre, vinaigrette au verjus",
+        "allergens": ["graines", "lait"]
+      }
+    }
+  },
+  {
+    "id": "chocolat_chaud",
+    "sku": "CAF-CHC",
+    "price": 4.8,
+    "image": "https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=800&q=80",
+    "category": "coffee",
+    "tags": ["hot", "comfort"],
+    "translations": {
+      "en": {
+        "name": "Old-World Hot Chocolate",
+        "description": "Thick Valrhona chocolate with steamed milk and Tahitian vanilla.",
+        "composition": "Valrhona chocolate, milk, vanilla",
+        "allergens": ["milk"]
+      },
+      "fr": {
+        "name": "Chocolat chaud à l'ancienne",
+        "description": "Chocolat Valrhona onctueux avec lait vapeur et vanille tahitienne.",
+        "composition": "Chocolat Valrhona, lait, vanille",
+        "allergens": ["lait"]
+      }
+    }
+  }
+]
