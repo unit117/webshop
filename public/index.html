@@ -13,6 +13,64 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+    <div class="preference-overlay is-visible" id="preference-overlay" role="dialog" aria-modal="true">
+      <div class="preference-card">
+        <p class="eyebrow" id="preference-eyebrow">Planifier votre visite</p>
+        <h2 id="preference-heading">Comment pouvons-nous préparer votre commande ?</h2>
+        <div class="preference-group">
+          <p id="preference-dine-label">Où souhaitez-vous la déguster ?</p>
+          <div class="preference-options">
+            <button
+              type="button"
+              class="preference-option"
+              data-preference-group="dine"
+              data-preference-value="eatIn"
+            >
+              <span class="preference-emoji" aria-hidden="true">🍽️</span>
+              <span id="preference-eat-in">Sur place</span>
+            </button>
+            <button
+              type="button"
+              class="preference-option"
+              data-preference-group="dine"
+              data-preference-value="takeOut"
+            >
+              <span class="preference-emoji" aria-hidden="true">🥡</span>
+              <span id="preference-take-out">À emporter</span>
+            </button>
+          </div>
+        </div>
+        <div class="preference-group">
+          <p id="preference-timing-label">Quand souhaitez-vous être servi ?</p>
+          <div class="preference-options">
+            <button
+              type="button"
+              class="preference-option"
+              data-preference-group="timing"
+              data-preference-value="now"
+            >
+              <span class="preference-emoji" aria-hidden="true">⚡</span>
+              <span id="preference-now">Maintenant</span>
+            </button>
+            <button
+              type="button"
+              class="preference-option"
+              data-preference-group="timing"
+              data-preference-value="later"
+            >
+              <span class="preference-emoji" aria-hidden="true">🕰️</span>
+              <span id="preference-later">Plus tard</span>
+            </button>
+          </div>
+          <p class="preference-warning" id="later-warning" hidden>
+            <span aria-hidden="true">⚠️</span>
+            <span id="preference-later-note">Les commandes plus tard ne sont pas garanties.</span>
+          </p>
+        </div>
+        <button type="button" class="primary preference-cta" id="preference-cta">Commencer ma commande</button>
+      </div>
+    </div>
+
     <header class="hero">
       <div>
         <p class="eyebrow">Café du Canal · Paris 10e</p>
