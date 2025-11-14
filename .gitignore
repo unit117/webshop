@@ -1,0 +1,5 @@
+node_modules
+npm-debug.log*
+.DS_Store
+data/orders.json
+data/sales-ledger.json

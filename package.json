@@ -1,0 +1,13 @@
+{
+  "name": "webshop",
+  "version": "1.0.0",
+  "description": "Paris cafe ordering + sales ledger prototype",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
