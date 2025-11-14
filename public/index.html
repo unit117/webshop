@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Café du Canal — Online Ordering</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="preference-overlay is-visible" id="preference-overlay" role="dialog" aria-modal="true">
+      <div class="preference-card">
+        <p class="eyebrow" id="preference-eyebrow">Planifier votre visite</p>
+        <h2 id="preference-heading">Comment pouvons-nous préparer votre commande ?</h2>
+        <div class="preference-group">
+          <p id="preference-dine-label">Où souhaitez-vous la déguster ?</p>
+          <div class="preference-options">
+            <button
+              type="button"
+              class="preference-option"
+              data-preference-group="dine"
+              data-preference-value="eatIn"
+            >
+              <span class="preference-emoji" aria-hidden="true">🍽️</span>
+              <span id="preference-eat-in">Sur place</span>
+            </button>
+            <button
+              type="button"
+              class="preference-option"
+              data-preference-group="dine"
+              data-preference-value="takeOut"
+            >
+              <span class="preference-emoji" aria-hidden="true">🥡</span>
+              <span id="preference-take-out">À emporter</span>
+            </button>
+          </div>
+        </div>
+        <div class="preference-group">
+          <p id="preference-timing-label">Quand souhaitez-vous être servi ?</p>
+          <div class="preference-options">
+            <button
+              type="button"
+              class="preference-option"
+              data-preference-group="timing"
+              data-preference-value="now"
+            >
+              <span class="preference-emoji" aria-hidden="true">⚡</span>
+              <span id="preference-now">Maintenant</span>
+            </button>
+            <button
+              type="button"
+              class="preference-option"
+              data-preference-group="timing"
+              data-preference-value="later"
+            >
+              <span class="preference-emoji" aria-hidden="true">🕰️</span>
+              <span id="preference-later">Plus tard</span>
+            </button>
+          </div>
+          <p class="preference-warning" id="later-warning" hidden>
+            <span aria-hidden="true">⚠️</span>
+            <span id="preference-later-note">Les commandes plus tard ne sont pas garanties.</span>
+          </p>
+        </div>
+        <button type="button" class="primary preference-cta" id="preference-cta">Commencer ma commande</button>
+      </div>
+    </div>
+
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Café du Canal · Paris 10e</p>
+        <h1>Digital ordering that feels as warm as our dining room.</h1>
+        <p class="lead">
+          Browse our menu, review allergen details, and pay with Apple Pay, credit card, or PayPal.
+          Orders drop straight into the sales ledger used across every channel.
+        </p>
+        <div class="hero-actions">
+          <button id="language-toggle" class="pill">FR / EN</button>
+          <span class="hours">Open today until 19h00</span>
+        </div>
+      </div>
+      <div class="hero-card">
+        <p class="hero-card__title">Sales snapshot</p>
+        <p class="hero-card__value" id="sales-total">€0</p>
+        <p class="hero-card__meta" id="sales-meta">0 orders today</p>
+        <div class="payment-breakdown" id="payment-breakdown"></div>
+      </div>
+    </header>
+
+    <main>
+      <section>
+        <h2 id="menu-heading">Menu</h2>
+        <div id="menu-grid" class="menu-grid" aria-live="polite"></div>
+      </section>
+
+      <section class="order-panel">
+        <div>
+          <h2 id="cart-heading">Your selection</h2>
+          <div id="cart" class="cart"></div>
+          <div class="cart-total">
+            <span id="cart-count">0 items</span>
+            <strong id="cart-total">€0.00</strong>
+          </div>
+        </div>
+        <form id="order-form" class="order-form">
+          <h3>Guest details</h3>
+          <label>
+            <span id="label-name">Name</span>
+            <input type="text" name="customerName" required />
+          </label>
+          <label>
+            <span id="label-contact">Contact (email or phone)</span>
+            <input type="text" name="contact" />
+          </label>
+
+          <h3 id="payment-heading">Payment</h3>
+          <div class="payment-options">
+            <label>
+              <input type="radio" name="payment" value="applePay" checked /> Apple Pay
+            </label>
+            <label>
+              <input type="radio" name="payment" value="creditCard" /> Credit card
+            </label>
+            <label>
+              <input type="radio" name="payment" value="paypal" /> PayPal
+            </label>
+          </div>
+
+          <div id="payment-details" class="payment-details"></div>
+
+          <button type="submit" class="primary" id="submit-order" disabled>
+            Place order
+          </button>
+          <p class="form-status" id="form-status" role="status"></p>
+        </form>
+      </section>
+
+      <section>
+        <h2>Ledger activity</h2>
+        <div id="ledger" class="ledger"></div>
+      </section>
+    </main>
+
+    <footer>
+      <p>© <span id="year"></span> Café du Canal · 17 Quai de Valmy · Paris</p>
+    </footer>
+
+    <div class="mobile-toolbar mobile-toolbar--hidden" id="mobile-toolbar" aria-live="polite">
+      <button type="button" class="mobile-toolbar__summary" id="mobile-cart-toggle">
+        <div>
+          <span id="mobile-toolbar-label">0 items</span>
+          <span id="mobile-toolbar-hint" class="mobile-toolbar__hint">View cart</span>
+        </div>
+        <strong id="mobile-toolbar-total">€0.00</strong>
+      </button>
+      <button type="button" class="mobile-toolbar__checkout" id="mobile-checkout">Go to payment</button>
+    </div>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>
