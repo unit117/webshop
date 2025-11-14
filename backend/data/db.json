@@ -1,0 +1,42 @@
+{
+  "locations": [
+    {
+      "id": "loc-1",
+      "name_en": "Downtown",
+      "name_fr": "Centre-ville",
+      "address_en": "123 Center Plaza",
+      "address_fr": "123 Place Centrale",
+      "timezone": "America/New_York"
+    }
+  ],
+  "menuItems": [
+    {
+      "id": "item-1",
+      "name_en": "Signature Latte",
+      "name_fr": "Latte Signature",
+      "description_en": "House espresso with local oat milk.",
+      "description_fr": "Espresso maison avec lait d'avoine local.",
+      "price": 5.5,
+      "locationId": "loc-1",
+      "category": "coffee",
+      "modifierIds": ["mod-1"]
+    }
+  ],
+  "modifiers": [
+    {
+      "id": "mod-1",
+      "name_en": "Milk",
+      "name_fr": "Lait",
+      "options": [
+        {"id": "opt-1", "name_en": "Whole", "name_fr": "Entier", "price": 0},
+        {"id": "opt-2", "name_en": "Oat", "name_fr": "Avoine", "price": 0.5}
+      ],
+      "min": 1,
+      "max": 1
+    }
+  ],
+  "users": [],
+  "orders": [],
+  "payments": [],
+  "passkeyChallenges": []
+}
