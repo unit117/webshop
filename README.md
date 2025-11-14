@@ -26,6 +26,19 @@ A lightweight, self-hosted online ordering experience for a Parisian café. It e
 
 4. **Place a test order** — Add items, select a payment method, and submit. The order will be appended to `data/orders.json` and the dashboard tiles refresh automatically.
 
+### Local data + languages
+
+The storefront ships with fully translated English/French copy plus placeholder entries for other languages. To wire in your own locale data end-to-end:
+
+1. **Menu translations** — Every menu item in `data/menu.json` exposes a `translations` object. Add a new key per language code (for example `"es"`) and provide `name`, `description`, `composition`, and `allergens`. Any field that is missing will automatically fall back to English when the menu is requested.
+2. **Expose the locale via the API** — Update `SUPPORTED_LANGUAGES` inside `src/server.js` so `/api/menu?lang=xx` accepts your new code. Restart `npm start` after editing so the server reloads the list.
+3. **Surface the language in the UI**
+   - Add an entry to the `languages` array in `public/app.js` with the language `code`, the English and native labels, and any fuzzy `keywords` you want the selector to match (e.g., `['mandarin', 'chinese', '中文']`). Set `available: true` when the locale is ready.
+   - Extend the `dictionary` object in the same file with all interface strings (`menu`, `cart`, `languageHelper`, etc.) translated into the new language. Anything you omit will use the English copy, so you can bootstrap gradually.
+4. **Verify locally** — Restart the dev server, open the floating language switcher, search using one of the keywords you configured, and confirm the storefront reloads `/api/menu` with the new `lang` query parameter while the UI strings swap to your translation.
+
+Because the search is keyword-driven you can include multiple aliases per language (e.g., `['español', 'spanish', 'castellano']`) to make it easy for guests to find their preferred locale. Additional languages can be added offline on your Mac and synced to production when ready—the JSON files are the single source of truth.
+
 ## Configuration
 
 Environment variables:
