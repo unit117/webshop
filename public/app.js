@@ -10,7 +10,12 @@ const state = {
   },
   users: [],
   selectedUserId: '',
-  userHistory: []
+  userHistory: [],
+  customization: {
+    product: null,
+    quantity: 1,
+    selections: {}
+  }
 };
 
 const languages = [
@@ -149,6 +154,21 @@ const preferenceSummaryTitle = document.getElementById('preference-summary-title
 const preferenceSummaryDine = document.getElementById('preference-summary-dine');
 const preferenceSummaryTime = document.getElementById('preference-summary-time');
 const preferenceSummaryChange = document.getElementById('preference-summary-change');
+const customizationModal = document.getElementById('customization-modal');
+const customizationCard = document.getElementById('customization-card');
+const customizationClose = document.getElementById('customization-close');
+const customizationEyebrow = document.getElementById('customization-eyebrow');
+const customizationTitle = document.getElementById('customization-title');
+const customizationDescription = document.getElementById('customization-description');
+const customizationPrice = document.getElementById('customization-price');
+const customizationOptions = document.getElementById('customization-options');
+const customizationError = document.getElementById('customization-error');
+const customizationSubmit = document.getElementById('customization-submit');
+const customizationQuantityLabel = document.getElementById('customization-quantity-label');
+const customizationQuantityValue = document.getElementById('customization-quantity-value');
+const customizationQuantityDecrease = document.getElementById('customization-quantity-decrease');
+const customizationQuantityIncrease = document.getElementById('customization-quantity-increase');
+const customizationBackdrop = document.getElementById('customization-backdrop');
 const heroEyebrow = document.getElementById('hero-eyebrow');
 const heroHeading = document.getElementById('hero-heading');
 const heroLead = document.getElementById('hero-lead');
@@ -207,6 +227,7 @@ const preferenceSummaryTimeText = document.getElementById('preference-summary-ti
   bindAccountEvents();
   initializeLanguageSelector();
   initializePreferenceOverlay();
+  initializeCustomizationModal();
   renderCart();
   renderPaymentFields('applePay');
   await Promise.all([loadMenu(), refreshSales(), loadUsers()]);
@@ -376,7 +397,6 @@ async function applyLanguage(lang, options = {}) {
   updateLanguageBadge();
   renderCart();
   renderPaymentFields(orderForm.payment.value);
-  updatePreferenceCopy();
   updatePreferenceSummary();
   if (!options.skipMenu) {
     await loadMenu();
@@ -463,6 +483,8 @@ function updateStaticCopy() {
   if (preferenceCTA) preferenceCTA.textContent = t('goOrder');
   renderUserOptions();
   updateAccountSummary();
+  updatePreferenceCopy();
+  updateCustomizationCopy();
 }
 
 function initializeLanguageSelector() {
@@ -564,7 +586,10 @@ async function loadMenu() {
   try {
     const response = await fetch(`/api/menu?lang=${state.language}`);
     const data = await response.json();
-    state.menu = data.items;
+    state.menu = data.items.map((item) => ({
+      ...item,
+      customizations: Array.isArray(item.customizations) ? item.customizations : []
+    }));
     renderMenu();
   } catch (error) {
     console.error(error);
@@ -580,6 +605,7 @@ function renderMenu() {
   state.menu.forEach((item) => {
     const card = document.createElement('article');
     card.className = 'menu-card';
+    const hasCustomizations = Array.isArray(item.customizations) && item.customizations.length > 0;
     card.innerHTML = `
       <img src="${item.image}" alt="${item.name}" loading="lazy" />
       <div class="menu-card__body">
@@ -595,26 +621,48 @@ function renderMenu() {
         <div class="menu-card__tags">
           ${item.tags.map((tag) => `<span class="tag">${tag}</span>`).join('')}
         </div>
-        <button type="button" data-id="${item.id}">${t('addToOrder')}</button>
+        <button type="button" data-id="${item.id}">${
+          hasCustomizations ? t('customizeButton') : t('addToOrder')
+        }</button>
       </div>
     `;
-    card.querySelector('button').addEventListener('click', () => addToCart(item));
+    card.querySelector('button').addEventListener('click', () => {
+      if (hasCustomizations) {
+        openCustomizationModal(item);
+      } else {
+        addProductToCart(item);
+      }
+    });
     menuGrid.appendChild(card);
   });
 }
 
-function addToCart(item) {
-  const existing = state.cart.find((entry) => entry.id === item.id);
-  if (existing) {
-    existing.quantity += 1;
-  } else {
-    state.cart.push({ id: item.id, name: item.name, price: item.price, quantity: 1 });
+function addProductToCart(product, quantity = 1, customizations = []) {
+  const hasCustomizations = Array.isArray(customizations) && customizations.length > 0;
+  if (!hasCustomizations) {
+    const existing = state.cart.find(
+      (entry) => entry.productId === product.id && entry.customizations.length === 0
+    );
+    if (existing) {
+      existing.quantity += quantity;
+      renderCart();
+      return;
+    }
   }
+  state.cart.push({
+    key: crypto?.randomUUID?.() || `${product.id}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    productId: product.id,
+    name: product.name,
+    basePrice: product.price,
+    unitPrice: calculateCustomizationUnitPrice(product, customizations),
+    quantity,
+    customizations: customizations || []
+  });
   renderCart();
 }
 
-function removeFromCart(id) {
-  state.cart = state.cart.filter((item) => item.id !== id);
+function removeFromCart(key) {
+  state.cart = state.cart.filter((item) => item.key !== key);
   renderCart();
 }
 
@@ -633,26 +681,73 @@ function renderCart() {
   state.cart.forEach((item) => {
     const row = document.createElement('div');
     row.className = 'cart-item';
+    const customizations = item.customizations?.length
+      ? `<ul class="cart-item__mods">${item.customizations
+          .map(
+            (section) =>
+              `<li><strong>${section.label}:</strong> ${section.options
+                .map((option) => option.label)
+                .join(', ')}</li>`
+          )
+          .join('')}</ul>`
+      : '';
     row.innerHTML = `
-      <div class="cart-item__info">
-        <strong>${item.name}</strong>
-        <span>${tp('cartItems', item.quantity)}</span>
-      </div>
       <div>
-        <span>${formatCurrency(item.price * item.quantity)}</span>
-        <button type="button" aria-label="Remove" data-id="${item.id}">✕</button>
+        <div class="cart-item__info">
+          <div>
+            <strong>${item.name}</strong>
+            ${customizations}
+          </div>
+          <div class="cart-item__actions">
+            <div class="quantity-control quantity-control--small">
+              <button type="button" data-action="decrease" data-key="${item.key}" aria-label="${t(
+                'cartDecrease'
+              )}">−</button>
+              <span>${item.quantity}</span>
+              <button type="button" data-action="increase" data-key="${item.key}" aria-label="${t(
+                'cartIncrease'
+              )}">+</button>
+            </div>
+            <button type="button" class="cart-item__remove" data-action="remove" data-key="${item.key}" aria-label="${t(
+              'cartRemove'
+            )}">✕</button>
+          </div>
+        </div>
+        <div class="cart-item__price">${formatCurrency(item.unitPrice * item.quantity)}</div>
       </div>
     `;
-    row.querySelector('button').addEventListener('click', () => removeFromCart(item.id));
+    row.querySelectorAll('[data-action]').forEach((button) => {
+      const action = button.getAttribute('data-action');
+      const key = button.getAttribute('data-key');
+      if (action === 'remove') {
+        button.addEventListener('click', () => removeFromCart(key));
+      } else if (action === 'increase') {
+        button.addEventListener('click', () => changeCartQuantity(key, 1));
+      } else if (action === 'decrease') {
+        button.addEventListener('click', () => changeCartQuantity(key, -1));
+      }
+    });
     cartContainer.appendChild(row);
   });
 
   const totalItems = state.cart.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = state.cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const totalPrice = state.cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   cartCount.textContent = tp('cartItems', totalItems);
   cartTotal.textContent = formatCurrency(totalPrice);
   submitButton.disabled = false;
   updateMobileToolbar(totalItems, totalPrice);
+}
+
+function changeCartQuantity(key, delta) {
+  const item = state.cart.find((entry) => entry.key === key);
+  if (!item) return;
+  const next = item.quantity + delta;
+  if (next <= 0) {
+    removeFromCart(key);
+  } else {
+    item.quantity = next;
+    renderCart();
+  }
 }
 
 function updateMobileToolbar(count, total) {
@@ -681,8 +776,12 @@ function buildOrderPayload() {
     contact: formData.get('contact'),
     language: state.language,
     items: state.cart.map((item) => ({
-      menuItemId: item.id,
-      quantity: item.quantity
+      menuItemId: item.productId,
+      quantity: item.quantity,
+      customizations: item.customizations.map((section) => ({
+        id: section.id,
+        options: section.options.map((option) => option.id)
+      }))
     })),
     preference,
     payment: {
@@ -813,6 +912,197 @@ function updatePreferenceCopy() {
   }
   if (state.preference.timing === 'later') {
     renderTimeSlots();
+  }
+}
+
+function initializeCustomizationModal() {
+  if (!customizationModal) return;
+  customizationSubmit?.addEventListener('click', handleCustomizationSubmit);
+  customizationClose?.addEventListener('click', closeCustomizationModal);
+  customizationBackdrop?.addEventListener('click', closeCustomizationModal);
+  customizationQuantityDecrease?.addEventListener('click', () => changeCustomizationQuantity(-1));
+  customizationQuantityIncrease?.addEventListener('click', () => changeCustomizationQuantity(1));
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && customizationModal.classList.contains('is-visible')) {
+      closeCustomizationModal();
+    }
+  });
+}
+
+function openCustomizationModal(product) {
+  state.customization.product = product;
+  state.customization.quantity = 1;
+  state.customization.selections = {};
+  renderCustomizationModal();
+  customizationModal.classList.add('is-visible');
+  customizationModal.removeAttribute('aria-hidden');
+}
+
+function closeCustomizationModal() {
+  if (!customizationModal) return;
+  customizationModal.classList.remove('is-visible');
+  customizationModal.setAttribute('aria-hidden', 'true');
+  state.customization.product = null;
+  state.customization.selections = {};
+  state.customization.quantity = 1;
+}
+
+function renderCustomizationModal() {
+  if (!customizationModal || !state.customization.product) return;
+  const product = state.customization.product;
+  if (customizationEyebrow) customizationEyebrow.textContent = t('customizeEyebrow');
+  if (customizationTitle) customizationTitle.textContent = t('customizeHeading', { item: product.name });
+  if (customizationDescription) customizationDescription.textContent = product.description || '';
+  const selections = getCustomizationSelections(product);
+  const previewPrice = calculateCustomizationUnitPrice(product, selections);
+  if (customizationPrice) {
+    customizationPrice.textContent = t('customizePrice', { price: formatCurrency(previewPrice) });
+  }
+  if (customizationQuantityLabel) customizationQuantityLabel.textContent = t('customizeQuantity');
+  if (customizationQuantityValue) customizationQuantityValue.textContent = state.customization.quantity;
+  if (customizationSubmit) customizationSubmit.textContent = t('customizeSubmit');
+  if (customizationError) customizationError.textContent = '';
+  renderCustomizationOptions(product);
+}
+
+function renderCustomizationOptions(product) {
+  if (!customizationOptions) return;
+  customizationOptions.innerHTML = '';
+  const sections = Array.isArray(product.customizations) ? product.customizations : [];
+  if (!sections.length) {
+    customizationOptions.innerHTML = `<p>${t('customizeNoOptions')}</p>`;
+    return;
+  }
+  sections.forEach((section) => {
+    const wrapper = document.createElement('section');
+    wrapper.className = 'customization-section';
+    const selectedIds = state.customization.selections[section.id] || [];
+    wrapper.innerHTML = `
+      <div class="customization-section__heading">
+        <p>${section.label}</p>
+        <span>${section.required ? t('customizeRequired') : t('customizeOptional')}</span>
+      </div>
+      ${section.helper ? `<p class="customization-section__helper">${section.helper}</p>` : ''}
+      <div class="customization-options" role="group"></div>
+    `;
+    const optionsContainer = wrapper.querySelector('.customization-options');
+    (section.options || []).forEach((option) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'customization-option';
+      if (selectedIds.includes(option.id)) {
+        button.classList.add('is-selected');
+      }
+      button.innerHTML = `
+        <span>${option.label}</span>
+        <span>${formatPriceDelta(option.priceDelta)}</span>
+      `;
+      button.addEventListener('click', () => toggleCustomizationOption(section, option));
+      optionsContainer?.appendChild(button);
+    });
+    customizationOptions.appendChild(wrapper);
+  });
+}
+
+function toggleCustomizationOption(section, option) {
+  const current = state.customization.selections[section.id] || [];
+  let next = [];
+  if ((section.type || 'single') === 'single') {
+    next = current.includes(option.id) ? [] : [option.id];
+  } else {
+    const exists = current.includes(option.id);
+    if (exists) {
+      next = current.filter((entry) => entry !== option.id);
+    } else {
+      if (section.max && current.length >= section.max) {
+        next = current;
+      } else {
+        next = [...current, option.id];
+      }
+    }
+  }
+  state.customization.selections[section.id] = next;
+  renderCustomizationModal();
+}
+
+function changeCustomizationQuantity(delta) {
+  const next = Math.max(1, state.customization.quantity + delta);
+  state.customization.quantity = next;
+  if (customizationQuantityValue) customizationQuantityValue.textContent = next;
+  if (state.customization.product) {
+    const selections = getCustomizationSelections(state.customization.product);
+    const previewPrice = calculateCustomizationUnitPrice(state.customization.product, selections);
+    if (customizationPrice) {
+      customizationPrice.textContent = t('customizePrice', { price: formatCurrency(previewPrice) });
+    }
+  }
+}
+
+function handleCustomizationSubmit() {
+  const product = state.customization.product;
+  if (!product) return;
+  const sections = Array.isArray(product.customizations) ? product.customizations : [];
+  const missingRequired = sections.some(
+    (section) => section.required && !(state.customization.selections[section.id]?.length)
+  );
+  if (missingRequired) {
+    if (customizationError) customizationError.textContent = t('customizeError');
+    return;
+  }
+  const selectedSections = getCustomizationSelections(product);
+  addProductToCart(product, state.customization.quantity, selectedSections);
+  closeCustomizationModal();
+}
+
+function getCustomizationSelections(product) {
+  if (!product?.customizations?.length) return [];
+  return product.customizations
+    .map((section) => {
+      const selectedIds = state.customization.selections[section.id] || [];
+      if (!selectedIds.length) return null;
+      const options = section.options
+        .filter((option) => selectedIds.includes(option.id))
+        .map((option) => ({
+          id: option.id,
+          label: option.label,
+          priceDelta: option.priceDelta || 0
+        }));
+      if (!options.length) return null;
+      return {
+        id: section.id,
+        label: section.label,
+        helper: section.helper,
+        type: section.type,
+        options
+      };
+    })
+    .filter(Boolean);
+}
+
+function calculateCustomizationUnitPrice(product, selections) {
+  const modifiers = Array.isArray(selections) ? selections : [];
+  const additional = modifiers.reduce((sum, section) => {
+    const delta = section.options?.reduce((optSum, option) => optSum + (option.priceDelta || 0), 0) || 0;
+    return sum + delta;
+  }, 0);
+  return Number((product.price + additional).toFixed(2));
+}
+
+function formatPriceDelta(delta = 0) {
+  if (!delta) {
+    return t('customizeIncluded');
+  }
+  const sign = delta > 0 ? '+' : '-';
+  return `${sign}${formatCurrency(Math.abs(delta))}`;
+}
+
+function updateCustomizationCopy() {
+  if (customizationEyebrow) customizationEyebrow.textContent = t('customizeEyebrow');
+  if (customizationQuantityLabel) customizationQuantityLabel.textContent = t('customizeQuantity');
+  if (customizationSubmit) customizationSubmit.textContent = t('customizeSubmit');
+  if (customizationClose) customizationClose.setAttribute('aria-label', t('customizeClose'));
+  if (state.customization.product) {
+    renderCustomizationModal();
   }
 }
 
@@ -976,7 +1266,10 @@ function generateTimeSlots() {
   end.setHours(23, 45, 0, 0);
   if (now > end) return [];
   const slots = [];
-  const nextSlot = new Date(now);
+  const midday = new Date(now);
+  midday.setHours(12, 0, 0, 0);
+  const startPoint = now > midday ? now : midday;
+  const nextSlot = new Date(startPoint);
   const remainder = nextSlot.getMinutes() % 15;
   const increment = remainder === 0 ? 15 : 15 - remainder;
   nextSlot.setMinutes(nextSlot.getMinutes() + increment, 0, 0);

@@ -58,6 +58,18 @@
   "allergensLabel": "Allergens",
   "noAllergens": "None declared",
   "addToOrder": "Add to order",
+  "customizeButton": "Customize & add",
+  "customizeEyebrow": "Tailor it",
+  "customizeHeading": "Personalize {item}",
+  "customizePrice": "Current price: {price}",
+  "customizeQuantity": "Quantity",
+  "customizeSubmit": "Add to order",
+  "customizeOptional": "Optional",
+  "customizeRequired": "Required",
+  "customizeError": "Please complete the required selections.",
+  "customizeNoOptions": "No extra options available.",
+  "customizeIncluded": "Included",
+  "customizeClose": "Close customization",
   "paymentCardholder": "Cardholder",
   "paymentCardNumber": "Card number",
   "paymentExpiry": "Expiry",
@@ -104,5 +116,8 @@
   "timeSlotRequired": "Please pick a time to continue.",
   "accountHistoryEntry": "{total} · {createdAt}",
   "loyaltyDrinkLabel": "{count} drinks",
-  "loyaltyRemainingLabel": "{remaining} remaining"
+  "loyaltyRemainingLabel": "{remaining} remaining",
+  "cartDecrease": "Decrease quantity",
+  "cartIncrease": "Increase quantity",
+  "cartRemove": "Remove item"
 }

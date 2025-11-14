@@ -255,6 +255,38 @@
       </section>
     </main>
 
+    <div class="customization-modal" id="customization-modal" aria-hidden="true">
+      <div class="customization-modal__backdrop" id="customization-backdrop"></div>
+      <div
+        class="customization-modal__card"
+        id="customization-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="customization-title"
+      >
+        <button type="button" class="customization-modal__close" id="customization-close" aria-label="Close">
+          ✕
+        </button>
+        <p class="eyebrow" id="customization-eyebrow">Personalize it</p>
+        <h2 id="customization-title">Personalize your order</h2>
+        <p id="customization-description"></p>
+        <p class="customization-modal__price" id="customization-price">Current price: €0.00</p>
+        <div id="customization-options"></div>
+        <p class="customization-modal__error" id="customization-error"></p>
+        <div class="customization-modal__quantity">
+          <span id="customization-quantity-label">Quantity</span>
+          <div class="quantity-control">
+            <button type="button" id="customization-quantity-decrease" aria-label="Decrease quantity">−</button>
+            <span id="customization-quantity-value">1</span>
+            <button type="button" id="customization-quantity-increase" aria-label="Increase quantity">+</button>
+          </div>
+        </div>
+        <button type="button" class="primary customization-modal__submit" id="customization-submit">
+          Add to order
+        </button>
+      </div>
+    </div>
+
     <footer>
       <p>© <span id="year"></span> Café du Canal · 17 Quai de Valmy · Paris</p>
     </footer>

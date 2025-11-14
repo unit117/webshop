@@ -58,6 +58,18 @@
   "allergensLabel": "Allergènes",
   "noAllergens": "Aucun déclaré",
   "addToOrder": "Ajouter",
+  "customizeButton": "Personnaliser",
+  "customizeEyebrow": "Personnalisez",
+  "customizeHeading": "Personnaliser {item}",
+  "customizePrice": "Prix actuel : {price}",
+  "customizeQuantity": "Quantité",
+  "customizeSubmit": "Ajouter à la commande",
+  "customizeOptional": "Optionnel",
+  "customizeRequired": "Obligatoire",
+  "customizeError": "Merci de compléter les choix obligatoires.",
+  "customizeNoOptions": "Pas d'options supplémentaires.",
+  "customizeIncluded": "Inclus",
+  "customizeClose": "Fermer la personnalisation",
   "paymentCardholder": "Titulaire de la carte",
   "paymentCardNumber": "Numéro de carte",
   "paymentExpiry": "Expiration",
@@ -104,5 +116,8 @@
   "timeSlotRequired": "Merci de choisir un créneau.",
   "accountHistoryEntry": "{total} · {createdAt}",
   "loyaltyDrinkLabel": "{count} boissons",
-  "loyaltyRemainingLabel": "{remaining} restantes"
+  "loyaltyRemainingLabel": "{remaining} restantes",
+  "cartDecrease": "Diminuer la quantité",
+  "cartIncrease": "Augmenter la quantité",
+  "cartRemove": "Supprimer l'article"
 }

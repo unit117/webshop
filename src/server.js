@@ -309,7 +309,8 @@ function getMenuForLanguage(lang) {
       description: translation.description || '',
       composition: translation.composition || '',
       allergens: translation.allergens || [],
-      language: lang
+      language: lang,
+      customizations: mergeCustomizations(product, translation)
     };
   });
 }
@@ -331,16 +332,19 @@ function validateOrder(order) {
   }
 
   const products = readJson(PRODUCTS_FILE);
-  const productIds = new Set(products.map((item) => item.id));
+  const productMap = new Map(products.map((item) => [item.id, item]));
   const users = getUsers();
 
   if (Array.isArray(order.items)) {
     order.items.forEach((item, index) => {
-      if (!productIds.has(item.menuItemId)) {
+      if (!productMap.has(item.menuItemId)) {
         issues.push(`Item at position ${index + 1} is invalid.`);
       }
       if (typeof item.quantity !== 'number' || item.quantity <= 0) {
         issues.push(`Quantity for item ${index + 1} must be a positive number.`);
+      }
+      if (productMap.has(item.menuItemId)) {
+        validateCustomizationsForItem(item, productMap.get(item.menuItemId), index, issues);
       }
     });
   }
@@ -393,14 +397,21 @@ function persistOrder(orderPayload) {
     const menuItem = productMap.get(entry.menuItemId);
     const translations = translationIndex.get(menuItem.id) || {};
     const translation = translations[language] || translations.en || {};
+    const { sections, totalDelta } = buildCustomizationsForOrder(
+      menuItem,
+      translation,
+      entry.customizations
+    );
+    const unitPrice = Number((menuItem.price + totalDelta).toFixed(2));
     return {
       menuItemId: menuItem.id,
       sku: menuItem.sku,
       name: translation.name || menuItem.id,
       quantity: entry.quantity,
       notes: entry.notes || '',
-      unitPrice: menuItem.price,
-      total: Number((menuItem.price * entry.quantity).toFixed(2))
+      customizations: sections,
+      unitPrice,
+      total: Number((unitPrice * entry.quantity).toFixed(2))
     };
   });
 
@@ -563,6 +574,125 @@ function buildTranslationIndex() {
     index.get(entry.productId)[entry.language] = entry;
   });
   return index;
+}
+
+function mergeCustomizations(product, translation) {
+  const modifiers = Array.isArray(product?.modifiers) ? product.modifiers : [];
+  if (!modifiers.length) return [];
+  const translationModifiers = Array.isArray(translation?.modifiers) ? translation.modifiers : [];
+  return modifiers.map((modifier) => {
+    const translationSection = translationModifiers.find((entry) => entry.id === modifier.id) || {};
+    return {
+      id: modifier.id,
+      type: modifier.type || 'single',
+      required: Boolean(modifier.required),
+      max: typeof modifier.max === 'number' ? modifier.max : null,
+      label: translationSection.label || modifier.id,
+      helper: translationSection.helper || '',
+      options: (modifier.options || []).map((option) => {
+        const translationOption = translationSection.options?.find((entry) => entry.id === option.id) || {};
+        return {
+          id: option.id,
+          label: translationOption.label || option.id,
+          priceDelta: Number(option.priceDelta || 0)
+        };
+      })
+    };
+  });
+}
+
+function buildCustomizationSelectionMap(payload) {
+  const map = new Map();
+  if (!Array.isArray(payload)) {
+    return map;
+  }
+  payload.forEach((entry) => {
+    if (!entry || typeof entry !== 'object') return;
+    const id = entry.id;
+    if (!id) return;
+    const options = Array.isArray(entry.options)
+      ? entry.options.filter((option) => typeof option === 'string')
+      : [];
+    map.set(id, Array.from(new Set(options)));
+  });
+  return map;
+}
+
+function validateCustomizationsForItem(item, product, index, issues) {
+  const modifiers = Array.isArray(product?.modifiers) ? product.modifiers : [];
+  if (!modifiers.length) {
+    if (Array.isArray(item.customizations) && item.customizations.length) {
+      issues.push(`Item ${index + 1} cannot be customized.`);
+    }
+    return;
+  }
+  const selectionMap = buildCustomizationSelectionMap(item.customizations);
+  selectionMap.forEach((options, modifierId) => {
+    const modifier = modifiers.find((entry) => entry.id === modifierId);
+    if (!modifier) {
+      issues.push(`Customization ${modifierId} on item ${index + 1} is invalid.`);
+      return;
+    }
+    const allowedOptions = new Set((modifier.options || []).map((option) => option.id));
+    const type = modifier.type || 'single';
+    if (type === 'single' && options.length > 1) {
+      issues.push(`Customization ${modifierId} on item ${index + 1} accepts only one choice.`);
+    }
+    if (modifier.max && options.length > modifier.max) {
+      issues.push(`Customization ${modifierId} on item ${index + 1} exceeds the allowed selections.`);
+    }
+    options.forEach((optionId) => {
+      if (!allowedOptions.has(optionId)) {
+        issues.push(`Option ${optionId} on item ${index + 1} is invalid.`);
+      }
+    });
+  });
+  modifiers.forEach((modifier) => {
+    const selected = selectionMap.get(modifier.id) || [];
+    if (modifier.required && selected.length === 0) {
+      issues.push(`Customization ${modifier.id} on item ${index + 1} is required.`);
+    }
+  });
+}
+
+function buildCustomizationsForOrder(product, translation, payloadCustomizations) {
+  const modifiers = Array.isArray(product?.modifiers) ? product.modifiers : [];
+  if (!modifiers.length) {
+    return { sections: [], totalDelta: 0 };
+  }
+  const translationModifiers = Array.isArray(translation?.modifiers) ? translation.modifiers : [];
+  const selectionMap = buildCustomizationSelectionMap(payloadCustomizations);
+  let totalDelta = 0;
+  const sections = modifiers
+    .map((modifier) => {
+      const selected = selectionMap.get(modifier.id);
+      if (!selected || !selected.length) return null;
+      const translationSection = translationModifiers.find((entry) => entry.id === modifier.id) || {};
+      const options = selected
+        .map((optionId) => {
+          const baseOption = (modifier.options || []).find((option) => option.id === optionId);
+          if (!baseOption) return null;
+          const translationOption = translationSection.options?.find((entry) => entry.id === optionId) || {};
+          const priceDelta = Number(baseOption.priceDelta || 0);
+          totalDelta += priceDelta;
+          return {
+            id: optionId,
+            label: translationOption.label || optionId,
+            priceDelta
+          };
+        })
+        .filter(Boolean);
+      if (!options.length) return null;
+      return {
+        id: modifier.id,
+        label: translationSection.label || modifier.id,
+        helper: translationSection.helper || '',
+        type: modifier.type || 'single',
+        options
+      };
+    })
+    .filter(Boolean);
+  return { sections, totalDelta: Number(totalDelta.toFixed(2)) };
 }
 
 function createUsernameUser(payload) {
