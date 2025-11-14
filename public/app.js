@@ -1,7 +1,11 @@
 const state = {
   language: 'en',
   menu: [],
-  cart: []
+  cart: [],
+  preference: {
+    dine: null,
+    timing: null
+  }
 };
 
 const dictionary = {
@@ -31,9 +35,30 @@ const dictionary = {
     ledgerEmpty: 'Aucune commande pour le moment.',
     ordersRecorded: (count) => `${count} commande${count > 1 ? 's' : ''} enregistrée${count > 1 ? 's' : ''}`,
     viewCart: 'Voir le panier',
-    goToPayment: 'Aller au paiement'
+    goToPayment: 'Aller au paiement',
+    preferenceEyebrow: 'Planifier votre visite',
+    preferenceHeading: 'Comment pouvons-nous préparer votre commande ?',
+    dineLabel: 'Où souhaitez-vous la déguster ?',
+    timingLabel: 'Quand souhaitez-vous être servi ?',
+    eatIn: 'Sur place',
+    takeOut: 'À emporter',
+    now: 'Maintenant',
+    later: 'Plus tard',
+    laterNote: 'Les commandes plus tard ne sont pas garanties.',
+    goOrder: 'Commencer ma commande'
   }
 };
+
+dictionary.en.preferenceEyebrow = 'Plan your visit';
+dictionary.en.preferenceHeading = 'How can we prepare your order?';
+dictionary.en.dineLabel = 'Where will you enjoy it?';
+dictionary.en.timingLabel = 'When should we prepare it?';
+dictionary.en.eatIn = 'Eat in';
+dictionary.en.takeOut = 'Take out';
+dictionary.en.now = 'Now';
+dictionary.en.later = 'Later';
+dictionary.en.laterNote = 'Later pick-ups are not guaranteed.';
+dictionary.en.goOrder = 'Start order';
 
 const menuGrid = document.getElementById('menu-grid');
 const cartContainer = document.getElementById('cart');
@@ -55,6 +80,9 @@ const mobileCheckoutButton = document.getElementById('mobile-checkout');
 const mobileToolbarLabel = document.getElementById('mobile-toolbar-label');
 const mobileToolbarHint = document.getElementById('mobile-toolbar-hint');
 const mobileToolbarTotal = document.getElementById('mobile-toolbar-total');
+const preferenceOverlay = document.getElementById('preference-overlay');
+const preferenceCTA = document.getElementById('preference-cta');
+const laterWarning = document.getElementById('later-warning');
 
 yearEl.textContent = new Date().getFullYear();
 
@@ -64,6 +92,8 @@ languageToggle.addEventListener('click', () => {
   loadMenu();
   refreshSales();
 });
+
+initializePreferenceOverlay();
 
 orderForm.addEventListener('change', (event) => {
   if (event.target.name === 'payment') {
@@ -255,6 +285,7 @@ function updateCopy() {
   submitButton.textContent = dictionary[state.language].placeOrder;
   renderCart();
   renderPaymentFields(orderForm.payment.value);
+  updatePreferenceCopy();
 }
 
 function updateMobileToolbar(count, total) {
@@ -317,6 +348,79 @@ function renderPaymentFields(method = 'applePay') {
     `;
   }
   paymentDetails.innerHTML = markup;
+}
+
+function updatePreferenceCopy() {
+  if (!preferenceOverlay) return;
+  const labels = {
+    'preference-eyebrow': 'preferenceEyebrow',
+    'preference-heading': 'preferenceHeading',
+    'preference-dine-label': 'dineLabel',
+    'preference-timing-label': 'timingLabel',
+    'preference-eat-in': 'eatIn',
+    'preference-take-out': 'takeOut',
+    'preference-now': 'now',
+    'preference-later': 'later',
+    'preference-later-note': 'laterNote'
+  };
+  Object.entries(labels).forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.textContent = dictionary[state.language][key];
+    }
+  });
+  if (preferenceCTA) {
+    preferenceCTA.textContent = dictionary[state.language].goOrder;
+  }
+}
+
+function initializePreferenceOverlay() {
+  if (!preferenceOverlay) return;
+  const optionButtons = preferenceOverlay.querySelectorAll('.preference-option');
+  optionButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const group = button.dataset.preferenceGroup;
+      const value = button.dataset.preferenceValue;
+      state.preference[group] = value;
+      preferenceOverlay
+        .querySelectorAll(`.preference-option[data-preference-group="${group}"]`)
+        .forEach((option) => option.classList.toggle('is-selected', option === button));
+      if (group === 'timing') {
+        toggleLaterWarning(value === 'later');
+      }
+    });
+  });
+
+  preferenceCTA?.addEventListener('click', () => {
+    if (!state.preference.dine) {
+      selectDefaultPreference('dine', 'eatIn');
+    }
+    if (!state.preference.timing) {
+      selectDefaultPreference('timing', 'now');
+    }
+    preferenceOverlay.classList.remove('is-visible');
+    preferenceOverlay.setAttribute('aria-hidden', 'true');
+  });
+}
+
+function selectDefaultPreference(group, value) {
+  state.preference[group] = value;
+  const option = preferenceOverlay?.querySelector(
+    `.preference-option[data-preference-group="${group}"][data-preference-value="${value}"]`
+  );
+  if (option) {
+    preferenceOverlay
+      .querySelectorAll(`.preference-option[data-preference-group="${group}"]`)
+      .forEach((el) => el.classList.toggle('is-selected', el === option));
+  }
+  if (group === 'timing') {
+    toggleLaterWarning(value === 'later');
+  }
+}
+
+function toggleLaterWarning(isVisible) {
+  if (!laterWarning) return;
+  laterWarning.hidden = !isVisible;
 }
 
 function formatCurrency(value) {
