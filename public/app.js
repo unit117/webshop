@@ -4,7 +4,9 @@ const state = {
   cart: [],
   preference: {
     dine: null,
-    timing: null
+    timing: null,
+    timeSlot: null,
+    confirmedAt: null
   }
 };
 
@@ -160,6 +162,29 @@ dictionary.en.now = 'Now';
 dictionary.en.later = 'Later';
 dictionary.en.laterNote = 'Later pick-ups are not guaranteed.';
 dictionary.en.goOrder = 'Start order';
+dictionary.en.timeLabel = 'Choose a time today';
+dictionary.en.timeHint = 'Pick a 15-minute slot after the current time.';
+dictionary.en.timeUnavailable = 'No slots remain today.';
+dictionary.en.timeRequired = 'Please pick a time to continue.';
+dictionary.en.summaryTitle = 'Service preference';
+dictionary.en.summaryChange = 'Change';
+dictionary.en.summaryNow = 'Serve now';
+dictionary.en.summaryLaterPending = 'Later today';
+dictionary.en.summaryLaterAt = (time) => `Ready later at ${time}`;
+dictionary.en.summaryEatIn = 'Eat in';
+dictionary.en.summaryTakeOut = 'Take away';
+
+dictionary.fr.timeLabel = 'Choisissez une heure aujourd’hui';
+dictionary.fr.timeHint = 'Sélectionnez un créneau de 15 minutes après l’heure actuelle.';
+dictionary.fr.timeUnavailable = 'Plus de créneaux disponibles aujourd’hui.';
+dictionary.fr.timeRequired = 'Veuillez choisir un horaire pour continuer.';
+dictionary.fr.summaryTitle = 'Préférence de service';
+dictionary.fr.summaryChange = 'Modifier';
+dictionary.fr.summaryNow = 'Servir maintenant';
+dictionary.fr.summaryLaterPending = 'Plus tard aujourd’hui';
+dictionary.fr.summaryLaterAt = (time) => `Prêt pour ${time}`;
+dictionary.fr.summaryEatIn = 'Sur place';
+dictionary.fr.summaryTakeOut = 'À emporter';
 
 const menuGrid = document.getElementById('menu-grid');
 const cartContainer = document.getElementById('cart');
@@ -194,6 +219,19 @@ const mobileToolbarTotal = document.getElementById('mobile-toolbar-total');
 const preferenceOverlay = document.getElementById('preference-overlay');
 const preferenceCTA = document.getElementById('preference-cta');
 const laterWarning = document.getElementById('later-warning');
+const timeSlotGroup = document.getElementById('preference-time-group');
+const timeSlotList = document.getElementById('time-slot-options');
+const timeSlotEmpty = document.getElementById('time-slot-empty');
+const timeSlotError = document.getElementById('time-slot-error');
+const timeSlotEmptyText = document.getElementById('time-slot-empty-text');
+const timeSlotErrorText = document.getElementById('time-slot-error-text');
+const timeSlotLabel = document.getElementById('preference-time-label');
+const timeSlotHint = document.getElementById('preference-time-hint');
+const preferenceSummary = document.getElementById('preference-summary');
+const preferenceSummaryTitle = document.getElementById('preference-summary-title');
+const preferenceSummaryDine = document.getElementById('preference-summary-dine');
+const preferenceSummaryTime = document.getElementById('preference-summary-time');
+const preferenceSummaryChange = document.getElementById('preference-summary-change');
 
 yearEl.textContent = new Date().getFullYear();
 
@@ -249,6 +287,15 @@ mobileCartToggle?.addEventListener('click', () => {
 
 mobileCheckoutButton?.addEventListener('click', () => {
   orderForm?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+preferenceSummaryChange?.addEventListener('click', (event) => {
+  event.stopPropagation();
+  openPreferenceOverlay();
+});
+
+preferenceSummary?.addEventListener('click', () => {
+  openPreferenceOverlay();
 });
 
 function initializeLanguageSelector() {
@@ -387,6 +434,7 @@ function buildOrderPayload() {
   const formData = new FormData(orderForm);
   const paymentMethod = formData.get('payment');
   const paymentDetails = buildPaymentDetails(paymentMethod, formData);
+  const preference = getPreferencePayload();
 
   return {
     customerName: formData.get('customerName')?.trim(),
@@ -396,10 +444,24 @@ function buildOrderPayload() {
       menuItemId: item.id,
       quantity: item.quantity
     })),
+    preference,
     payment: {
       method: paymentMethod,
       details: paymentDetails
     }
+  };
+}
+
+function getPreferencePayload() {
+  const dine = state.preference.dine || 'eatIn';
+  const timing = state.preference.timing || 'now';
+  const confirmedAt = state.preference.confirmedAt || new Date().toISOString();
+
+  return {
+    dine,
+    timing,
+    timeSlot: timing === 'later' ? state.preference.timeSlot : null,
+    confirmedAt
   };
 }
 
@@ -540,6 +602,39 @@ function updateCopy() {
   updatePreferenceCopy();
 }
 
+function updatePreferenceSummary() {
+  if (!preferenceSummary) return;
+  if (!state.preference.dine || !state.preference.timing) {
+    preferenceSummary.hidden = true;
+    return;
+  }
+  preferenceSummary.hidden = false;
+  if (preferenceSummaryTitle) {
+    preferenceSummaryTitle.textContent = dictionary[state.language].summaryTitle;
+  }
+  if (preferenceSummaryChange) {
+    preferenceSummaryChange.textContent = dictionary[state.language].summaryChange;
+  }
+  const dineText =
+    state.preference.dine === 'takeOut'
+      ? dictionary[state.language].summaryTakeOut
+      : dictionary[state.language].summaryEatIn;
+  let timeText;
+  if (state.preference.timing === 'later') {
+    timeText = state.preference.timeSlot
+      ? dictionary[state.language].summaryLaterAt(formatSlotForDisplay(state.preference.timeSlot))
+      : dictionary[state.language].summaryLaterPending;
+  } else {
+    timeText = dictionary[state.language].summaryNow;
+  }
+  if (preferenceSummaryDine) {
+    preferenceSummaryDine.textContent = dineText;
+  }
+  if (preferenceSummaryTime) {
+    preferenceSummaryTime.textContent = timeText;
+  }
+}
+
 function updateMobileToolbar(count, total) {
   if (!mobileToolbar) return;
   mobileToolbarLabel.textContent = dictionary[state.language].cartItems(count);
@@ -613,7 +708,11 @@ function updatePreferenceCopy() {
     'preference-take-out': 'takeOut',
     'preference-now': 'now',
     'preference-later': 'later',
-    'preference-later-note': 'laterNote'
+    'preference-later-note': 'laterNote',
+    'preference-time-label': 'timeLabel',
+    'preference-time-hint': 'timeHint',
+    'time-slot-empty-text': 'timeUnavailable',
+    'time-slot-error-text': 'timeRequired'
   };
   Object.entries(labels).forEach(([id, key]) => {
     const el = document.getElementById(id);
@@ -624,6 +723,16 @@ function updatePreferenceCopy() {
   if (preferenceCTA) {
     preferenceCTA.textContent = dictionary[state.language].goOrder;
   }
+  if (preferenceSummaryTitle) {
+    preferenceSummaryTitle.textContent = dictionary[state.language].summaryTitle;
+  }
+  if (preferenceSummaryChange) {
+    preferenceSummaryChange.textContent = dictionary[state.language].summaryChange;
+  }
+  if (state.preference.timing === 'later') {
+    renderTimeSlots();
+  }
+  updatePreferenceSummary();
 }
 
 function initializePreferenceOverlay() {
@@ -633,13 +742,7 @@ function initializePreferenceOverlay() {
     button.addEventListener('click', () => {
       const group = button.dataset.preferenceGroup;
       const value = button.dataset.preferenceValue;
-      state.preference[group] = value;
-      preferenceOverlay
-        .querySelectorAll(`.preference-option[data-preference-group="${group}"]`)
-        .forEach((option) => option.classList.toggle('is-selected', option === button));
-      if (group === 'timing') {
-        toggleLaterWarning(value === 'later');
-      }
+      setPreferenceValue(group, value, button);
     });
   });
 
@@ -650,29 +753,188 @@ function initializePreferenceOverlay() {
     if (!state.preference.timing) {
       selectDefaultPreference('timing', 'now');
     }
-    preferenceOverlay.classList.remove('is-visible');
-    preferenceOverlay.setAttribute('aria-hidden', 'true');
+    if (state.preference.timing === 'later' && !state.preference.timeSlot) {
+      showTimeSlotError(true);
+      timeSlotGroup?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    showTimeSlotError(false);
+    state.preference.confirmedAt = new Date().toISOString();
+    closePreferenceOverlay();
+    updatePreferenceSummary();
+    recordPreferenceAttempt();
   });
 }
 
 function selectDefaultPreference(group, value) {
-  state.preference[group] = value;
   const option = preferenceOverlay?.querySelector(
     `.preference-option[data-preference-group="${group}"][data-preference-value="${value}"]`
   );
-  if (option) {
-    preferenceOverlay
-      .querySelectorAll(`.preference-option[data-preference-group="${group}"]`)
-      .forEach((el) => el.classList.toggle('is-selected', el === option));
-  }
+  setPreferenceValue(group, value, option);
+}
+
+function setPreferenceValue(group, value, button) {
+  state.preference[group] = value;
+  const options = preferenceOverlay?.querySelectorAll(
+    `.preference-option[data-preference-group="${group}"]`
+  );
+  options?.forEach((option) => {
+    const isSelected = button ? option === button : option.dataset.preferenceValue === value;
+    option.classList.toggle('is-selected', isSelected);
+  });
   if (group === 'timing') {
-    toggleLaterWarning(value === 'later');
+    handleTimingSelection(value);
   }
 }
 
 function toggleLaterWarning(isVisible) {
   if (!laterWarning) return;
   laterWarning.hidden = !isVisible;
+}
+
+function openPreferenceOverlay() {
+  if (!preferenceOverlay) return;
+  preferenceOverlay.classList.add('is-visible');
+  preferenceOverlay.removeAttribute('aria-hidden');
+  syncPreferenceSelections();
+}
+
+function closePreferenceOverlay() {
+  if (!preferenceOverlay) return;
+  preferenceOverlay.classList.remove('is-visible');
+  preferenceOverlay.setAttribute('aria-hidden', 'true');
+}
+
+function syncPreferenceSelections() {
+  if (!preferenceOverlay) return;
+  ['dine', 'timing'].forEach((group) => {
+    const value = state.preference[group];
+    if (!value) return;
+    const options = preferenceOverlay.querySelectorAll(
+      `.preference-option[data-preference-group="${group}"]`
+    );
+    options.forEach((option) => {
+      option.classList.toggle('is-selected', option.dataset.preferenceValue === value);
+    });
+  });
+  handleTimingSelection(state.preference.timing || 'now');
+}
+
+function handleTimingSelection(value) {
+  const isLater = value === 'later';
+  toggleLaterWarning(isLater);
+  if (isLater) {
+    showTimeSlotGroup();
+  } else {
+    hideTimeSlotGroup();
+  }
+}
+
+function showTimeSlotGroup() {
+  if (!timeSlotGroup) return;
+  timeSlotGroup.hidden = false;
+  renderTimeSlots();
+}
+
+function hideTimeSlotGroup() {
+  if (!timeSlotGroup) return;
+  timeSlotGroup.hidden = true;
+  state.preference.timeSlot = null;
+  showTimeSlotError(false);
+}
+
+function renderTimeSlots() {
+  if (!timeSlotList) return;
+  const slots = generateTimeSlots();
+  timeSlotList.innerHTML = '';
+  if (timeSlotEmptyText) {
+    timeSlotEmptyText.textContent = dictionary[state.language].timeUnavailable;
+  }
+  if (timeSlotErrorText) {
+    timeSlotErrorText.textContent = dictionary[state.language].timeRequired;
+  }
+  if (timeSlotLabel) {
+    timeSlotLabel.textContent = dictionary[state.language].timeLabel;
+  }
+  if (timeSlotHint) {
+    timeSlotHint.textContent = dictionary[state.language].timeHint;
+  }
+  if (!slots.length) {
+    if (timeSlotEmpty) {
+      timeSlotEmpty.hidden = false;
+    }
+    state.preference.timeSlot = null;
+    return;
+  }
+  if (timeSlotEmpty) {
+    timeSlotEmpty.hidden = true;
+  }
+  if (state.preference.timeSlot && !slots.includes(state.preference.timeSlot)) {
+    state.preference.timeSlot = null;
+  }
+  slots.forEach((slot) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'time-slot-option';
+    button.textContent = formatSlotForDisplay(slot);
+    if (state.preference.timeSlot === slot) {
+      button.classList.add('is-selected');
+    }
+    button.addEventListener('click', () => {
+      state.preference.timeSlot = slot;
+      timeSlotList.querySelectorAll('button').forEach((el) => el.classList.remove('is-selected'));
+      button.classList.add('is-selected');
+      showTimeSlotError(false);
+    });
+    timeSlotList.appendChild(button);
+  });
+}
+
+function generateTimeSlots() {
+  const now = new Date();
+  const end = new Date(now);
+  end.setHours(23, 45, 0, 0);
+  if (now > end) return [];
+
+  const slots = [];
+  const nextSlot = new Date(now);
+  const remainder = nextSlot.getMinutes() % 15;
+  const increment = remainder === 0 ? 15 : 15 - remainder;
+  nextSlot.setMinutes(nextSlot.getMinutes() + increment, 0, 0);
+
+  while (nextSlot <= end) {
+    slots.push(new Date(nextSlot).toISOString());
+    nextSlot.setMinutes(nextSlot.getMinutes() + 15);
+  }
+
+  return slots;
+}
+
+function formatSlotForDisplay(slot) {
+  if (!slot) return '';
+  return new Intl.DateTimeFormat(state.language === 'fr' ? 'fr-FR' : 'en-GB', {
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(new Date(slot));
+}
+
+function showTimeSlotError(isVisible) {
+  if (!timeSlotError) return;
+  timeSlotError.hidden = !isVisible;
+}
+
+function recordPreferenceAttempt() {
+  const payload = {
+    language: state.language,
+    preference: getPreferencePayload()
+  };
+  fetch('/api/order-attempts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch((error) => {
+    console.error('Unable to record order attempt', error);
+  });
 }
 
 function formatCurrency(value) {

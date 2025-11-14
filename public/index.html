@@ -49,10 +49,10 @@
 
     <div class="preference-overlay is-visible" id="preference-overlay" role="dialog" aria-modal="true">
       <div class="preference-card">
-        <p class="eyebrow" id="preference-eyebrow">Planifier votre visite</p>
-        <h2 id="preference-heading">Comment pouvons-nous préparer votre commande ?</h2>
+        <p class="eyebrow" id="preference-eyebrow">Plan your visit</p>
+        <h2 id="preference-heading">How can we prepare your order?</h2>
         <div class="preference-group">
-          <p id="preference-dine-label">Où souhaitez-vous la déguster ?</p>
+          <p id="preference-dine-label">Where will you enjoy it?</p>
           <div class="preference-options">
             <button
               type="button"
@@ -61,7 +61,7 @@
               data-preference-value="eatIn"
             >
               <span class="preference-emoji" aria-hidden="true">🍽️</span>
-              <span id="preference-eat-in">Sur place</span>
+              <span id="preference-eat-in">Eat in</span>
             </button>
             <button
               type="button"
@@ -70,12 +70,12 @@
               data-preference-value="takeOut"
             >
               <span class="preference-emoji" aria-hidden="true">🥡</span>
-              <span id="preference-take-out">À emporter</span>
+              <span id="preference-take-out">Take away</span>
             </button>
           </div>
         </div>
         <div class="preference-group">
-          <p id="preference-timing-label">Quand souhaitez-vous être servi ?</p>
+          <p id="preference-timing-label">When should we prepare it?</p>
           <div class="preference-options">
             <button
               type="button"
@@ -84,7 +84,7 @@
               data-preference-value="now"
             >
               <span class="preference-emoji" aria-hidden="true">⚡</span>
-              <span id="preference-now">Maintenant</span>
+              <span id="preference-now">Now</span>
             </button>
             <button
               type="button"
@@ -93,15 +93,28 @@
               data-preference-value="later"
             >
               <span class="preference-emoji" aria-hidden="true">🕰️</span>
-              <span id="preference-later">Plus tard</span>
+              <span id="preference-later">Later</span>
             </button>
           </div>
           <p class="preference-warning" id="later-warning" hidden>
             <span aria-hidden="true">⚠️</span>
-            <span id="preference-later-note">Les commandes plus tard ne sont pas garanties.</span>
+            <span id="preference-later-note">Later pick-ups are not guaranteed.</span>
           </p>
         </div>
-        <button type="button" class="primary preference-cta" id="preference-cta">Commencer ma commande</button>
+        <div class="preference-group preference-time" id="preference-time-group" hidden>
+          <p id="preference-time-label">Choose a time today</p>
+          <p class="preference-hint" id="preference-time-hint">Pick a 15-minute slot after the current time.</p>
+          <div class="time-slot-options" id="time-slot-options" role="listbox"></div>
+          <p class="preference-warning" id="time-slot-empty" hidden>
+            <span aria-hidden="true">ℹ️</span>
+            <span id="time-slot-empty-text">No slots remain today.</span>
+          </p>
+          <p class="preference-warning preference-warning--error" id="time-slot-error" hidden>
+            <span aria-hidden="true">⚠️</span>
+            <span id="time-slot-error-text">Please pick a time to continue.</span>
+          </p>
+        </div>
+        <button type="button" class="primary preference-cta" id="preference-cta">Start order</button>
       </div>
     </div>
 
@@ -133,6 +146,15 @@
 
       <section class="order-panel">
         <div>
+          <aside class="preference-summary" id="preference-summary" hidden>
+            <p class="preference-summary__title" id="preference-summary-title">Service preference</p>
+            <p class="preference-summary__value">
+              <span id="preference-summary-dine">Eat in</span>
+              <span aria-hidden="true">·</span>
+              <span id="preference-summary-time">Serve now</span>
+            </p>
+            <button type="button" class="preference-summary__change" id="preference-summary-change">Change</button>
+          </aside>
           <h2 id="cart-heading">Your selection</h2>
           <div id="cart" class="cart"></div>
           <div class="cart-total">

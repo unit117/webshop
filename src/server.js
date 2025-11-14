@@ -11,8 +11,11 @@ const DATA_DIR = path.join(ROOT, 'data');
 const MENU_FILE = path.join(DATA_DIR, 'menu.json');
 const ORDERS_FILE = path.join(DATA_DIR, 'orders.json');
 const LEDGER_FILE = path.join(DATA_DIR, 'sales-ledger.json');
+const ATTEMPTS_FILE = path.join(DATA_DIR, 'order-attempts.json');
 
 const SUPPORTED_LANGUAGES = ['en', 'fr'];
+const DINE_OPTIONS = ['eatIn', 'takeOut'];
+const TIMING_OPTIONS = ['now', 'later'];
 
 bootstrapDataFiles();
 
@@ -87,6 +90,30 @@ function handleApi(req, res) {
       .catch((err) => {
         console.error('Failed to save order', err);
         return sendJson(res, 500, { message: 'Unable to process order right now.' });
+      });
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/order-attempts') {
+    return collectBody(req)
+      .then((body) => {
+        let payload;
+        try {
+          payload = JSON.parse(body || '{}');
+        } catch (error) {
+          return sendJson(res, 400, { message: 'Invalid JSON payload.' });
+        }
+
+        const preferenceIssues = validatePreferencePayload(payload.preference);
+        if (preferenceIssues.length) {
+          return sendJson(res, 400, { message: 'Invalid preference.', issues: preferenceIssues });
+        }
+
+        const attempt = persistOrderAttempt(payload);
+        return sendJson(res, 201, attempt);
+      })
+      .catch((err) => {
+        console.error('Failed to record order attempt', err);
+        return sendJson(res, 500, { message: 'Unable to record attempt.' });
       });
   }
 
@@ -171,6 +198,10 @@ function bootstrapDataFiles() {
       lastTwentyOrders: []
     });
   }
+
+  if (!fs.existsSync(ATTEMPTS_FILE)) {
+    writeJson(ATTEMPTS_FILE, []);
+  }
 }
 
 function normaliseLanguage(lang) {
@@ -228,7 +259,31 @@ function validateOrder(order) {
     });
   }
 
+  issues.push(...validatePreferencePayload(order.preference));
+
   return { valid: issues.length === 0, issues };
+}
+
+function validatePreferencePayload(preference) {
+  const issues = [];
+  if (!preference || typeof preference !== 'object') {
+    issues.push('Service preference is required.');
+    return issues;
+  }
+  if (!DINE_OPTIONS.includes(preference.dine)) {
+    issues.push('Dining preference must be eat-in or take-out.');
+  }
+  if (!TIMING_OPTIONS.includes(preference.timing)) {
+    issues.push('Timing preference must be now or later.');
+  }
+  if (preference.timing === 'later') {
+    if (!preference.timeSlot) {
+      issues.push('A time slot is required for later pick-ups.');
+    } else if (Number.isNaN(Date.parse(preference.timeSlot))) {
+      issues.push('Scheduled time must be a valid timestamp.');
+    }
+  }
+  return issues;
 }
 
 function persistOrder(orderPayload) {
@@ -255,12 +310,14 @@ function persistOrder(orderPayload) {
   const orderTotal = items.reduce((sum, item) => sum + item.total, 0);
   const paymentMethod = orderPayload.payment.method;
   const maskedPayment = sanitisePayment(orderPayload.payment);
+  const preference = normalisePreference(orderPayload.preference);
 
   const newOrder = {
     id: randomUUID(),
     customerName: orderPayload.customerName.trim(),
     contact: orderPayload.contact || {},
     language,
+    preference,
     items,
     totals: {
       currency: 'EUR',
@@ -295,6 +352,38 @@ function persistOrder(orderPayload) {
   writeJson(LEDGER_FILE, ledger);
 
   return newOrder;
+}
+
+function persistOrderAttempt(payload) {
+  const attempts = readJson(ATTEMPTS_FILE);
+  const attempt = {
+    id: randomUUID(),
+    language: normaliseLanguage(payload.language),
+    preference: normalisePreference(payload.preference),
+    createdAt: new Date().toISOString()
+  };
+  attempts.push(attempt);
+  const trimmed = attempts.slice(-500);
+  writeJson(ATTEMPTS_FILE, trimmed);
+  return attempt;
+}
+
+function normalisePreference(preference = {}) {
+  const dine = DINE_OPTIONS.includes(preference.dine) ? preference.dine : 'eatIn';
+  const timing = TIMING_OPTIONS.includes(preference.timing) ? preference.timing : 'now';
+  const timeSlotValid =
+    timing === 'later' && preference.timeSlot && !Number.isNaN(Date.parse(preference.timeSlot));
+  const confirmedAt =
+    preference.confirmedAt && !Number.isNaN(Date.parse(preference.confirmedAt))
+      ? new Date(preference.confirmedAt).toISOString()
+      : new Date().toISOString();
+
+  return {
+    dine,
+    timing,
+    timeSlot: timeSlotValid ? new Date(preference.timeSlot).toISOString() : null,
+    confirmedAt
+  };
 }
 
 function sanitisePayment(payment) {
