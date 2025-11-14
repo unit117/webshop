@@ -1,0 +1,82 @@
+[
+  {
+    "productId": "espresso",
+    "language": "en",
+    "name": "Signature Espresso",
+    "description": "A double shot of Arabica beans roasted in Paris for a smooth, intense pick-me-up.",
+    "composition": "Arabica espresso",
+    "allergens": []
+  },
+  {
+    "productId": "espresso",
+    "language": "fr",
+    "name": "Espresso Signature",
+    "description": "Double shot de grains arabica torréfiés à Paris pour un réveil intense et soyeux.",
+    "composition": "Espresso arabica",
+    "allergens": []
+  },
+  {
+    "productId": "croissant",
+    "language": "en",
+    "name": "AOP Butter Croissant",
+    "description": "Flaky viennoiserie layered with Brittany AOP butter, baked fresh hourly.",
+    "composition": "Wheat flour, butter, milk, yeast, sugar, salt",
+    "allergens": ["gluten", "milk"]
+  },
+  {
+    "productId": "croissant",
+    "language": "fr",
+    "name": "Croissant au beurre AOP",
+    "description": "Viennoiserie feuilletée au beurre AOP de Bretagne, cuite chaque heure.",
+    "composition": "Farine de blé, beurre, lait, levure, sucre, sel",
+    "allergens": ["gluten", "lait"]
+  },
+  {
+    "productId": "tartine",
+    "language": "en",
+    "name": "Provençal Tartine",
+    "description": "Toasted levain with confit tomatoes, chèvre frais, basil oil, and micro greens.",
+    "composition": "Levain bread, confit tomatoes, goat cheese, basil oil, greens",
+    "allergens": ["gluten", "milk"]
+  },
+  {
+    "productId": "tartine",
+    "language": "fr",
+    "name": "Tartine Provençale",
+    "description": "Levain toasté, tomates confites, chèvre frais, huile de basilic et pousses.",
+    "composition": "Pain levain, tomates confites, fromage de chèvre, huile de basilic, pousses",
+    "allergens": ["gluten", "lait"]
+  },
+  {
+    "productId": "salade",
+    "language": "en",
+    "name": "Marais Market Salad",
+    "description": "Seasonal greens, citrus segments, toasted seeds, chèvre, and verjus vinaigrette.",
+    "composition": "Greens, citrus, seeds, goat cheese, verjus vinaigrette",
+    "allergens": ["seeds", "milk"]
+  },
+  {
+    "productId": "salade",
+    "language": "fr",
+    "name": "Salade du Marché du Marais",
+    "description": "Verdure de saison, agrumes, graines toastées, chèvre et vinaigrette au verjus.",
+    "composition": "Verdure, agrumes, graines, fromage de chèvre, vinaigrette au verjus",
+    "allergens": ["graines", "lait"]
+  },
+  {
+    "productId": "chocolat_chaud",
+    "language": "en",
+    "name": "Old-World Hot Chocolate",
+    "description": "Thick Valrhona chocolate with steamed milk and Tahitian vanilla.",
+    "composition": "Valrhona chocolate, milk, vanilla",
+    "allergens": ["milk"]
+  },
+  {
+    "productId": "chocolat_chaud",
+    "language": "fr",
+    "name": "Chocolat chaud à l'ancienne",
+    "description": "Chocolat Valrhona onctueux avec lait vapeur et vanille tahitienne.",
+    "composition": "Chocolat Valrhona, lait, vanille",
+    "allergens": ["lait"]
+  }
+]

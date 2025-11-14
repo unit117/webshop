@@ -120,18 +120,18 @@
 
     <header class="hero">
       <div>
-        <p class="eyebrow">Café du Canal · Paris 10e</p>
-        <h1>Digital ordering that feels as warm as our dining room.</h1>
-        <p class="lead">
+        <p class="eyebrow" id="hero-eyebrow">Café du Canal · Paris 10e</p>
+        <h1 id="hero-heading">Digital ordering that feels as warm as our dining room.</h1>
+        <p class="lead" id="hero-lead">
           Browse our menu, review allergen details, and pay with Apple Pay, credit card, or PayPal.
           Orders drop straight into the sales ledger used across every channel.
         </p>
         <div class="hero-actions">
-          <span class="hours">Open today until 19h00</span>
+          <span class="hours" id="hero-hours">Open today until 19h00</span>
         </div>
       </div>
       <div class="hero-card">
-        <p class="hero-card__title">Sales snapshot</p>
+        <p class="hero-card__title" id="hero-sales-title">Sales snapshot</p>
         <p class="hero-card__value" id="sales-total">€0</p>
         <p class="hero-card__meta" id="sales-meta">0 orders today</p>
         <div class="payment-breakdown" id="payment-breakdown"></div>
@@ -155,6 +155,60 @@
             </p>
             <button type="button" class="preference-summary__change" id="preference-summary-change">Change</button>
           </aside>
+          <section class="account-panel" id="account-panel">
+            <div class="account-panel__intro">
+              <h3 id="account-heading">Account</h3>
+              <p id="account-helper">Create an account to track your orders and loyalty rewards.</p>
+            </div>
+            <label class="account-panel__select">
+              <span id="account-select-label">Select a user</span>
+              <select id="account-select">
+                <option value="">Guest checkout</option>
+              </select>
+            </label>
+            <p class="account-panel__status" id="account-status">No account selected.</p>
+            <div class="account-panel__loyalty" id="account-loyalty" hidden>
+              <p class="account-panel__loyalty-title" id="account-loyalty-title">Loyalty progress</p>
+              <p id="account-loyalty-progress"></p>
+              <p class="account-panel__loyalty-note" id="account-loyalty-eligible" hidden>
+                Reward unlocked! Enjoy a complimentary drink on your next order.
+              </p>
+            </div>
+            <div class="account-panel__history" id="account-history" hidden>
+              <p class="account-panel__history-title" id="account-history-title">Recent orders</p>
+              <ul id="account-history-list"></ul>
+              <p id="account-history-empty">No orders recorded yet.</p>
+            </div>
+            <form id="username-account-form" class="account-form">
+              <h4 id="account-create-username">Create username account</h4>
+              <label>
+                <span id="account-username-label">Username (min 6 characters)</span>
+                <input type="text" name="username" minlength="6" required />
+              </label>
+              <label>
+                <span id="account-password-label">Password</span>
+                <input type="password" name="password" minlength="8" required />
+              </label>
+              <button type="submit" class="secondary" id="account-username-submit">Register</button>
+            </form>
+            <form id="email-account-form" class="account-form">
+              <h4 id="account-create-email">Create email + passkey account</h4>
+              <label>
+                <span id="account-email-label">Email address</span>
+                <input type="email" name="email" required />
+              </label>
+              <label>
+                <span id="account-passkey-label">Passkey nickname</span>
+                <input type="text" name="passkeyLabel" required />
+              </label>
+              <label>
+                <span id="account-passkey-public-label">Passkey public key (simulated)</span>
+                <input type="text" name="passkeyPublicKey" required />
+              </label>
+              <button type="submit" class="secondary" id="account-email-submit">Register</button>
+            </form>
+            <p class="account-panel__feedback" id="account-feedback" role="status"></p>
+          </section>
           <h2 id="cart-heading">Your selection</h2>
           <div id="cart" class="cart"></div>
           <div class="cart-total">
@@ -163,7 +217,7 @@
           </div>
         </div>
         <form id="order-form" class="order-form">
-          <h3>Guest details</h3>
+          <h3 id="guest-details-heading">Guest details</h3>
           <label>
             <span id="label-name">Name</span>
             <input type="text" name="customerName" required />
@@ -196,7 +250,7 @@
       </section>
 
       <section>
-        <h2>Ledger activity</h2>
+        <h2 id="ledger-heading">Ledger activity</h2>
         <div id="ledger" class="ledger"></div>
       </section>
     </main>

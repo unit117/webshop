@@ -7,7 +7,10 @@ const state = {
     timing: null,
     timeSlot: null,
     confirmedAt: null
-  }
+  },
+  users: [],
+  selectedUserId: '',
+  userHistory: []
 };
 
 const languages = [
@@ -97,94 +100,7 @@ const languages = [
   }
 ];
 
-const dictionary = {
-  en: {
-    menu: 'Menu',
-    cart: 'Your selection',
-    name: 'Name',
-    contact: 'Contact (email or phone)',
-    payment: 'Payment',
-    placeOrder: 'Place order',
-    emptyCart: 'Select an item to begin your order.',
-    cartItems: (count) => `${count} item${count === 1 ? '' : 's'}`,
-    ledgerEmpty: 'No orders yet.',
-    ordersRecorded: (count) => `${count} order${count === 1 ? '' : 's'} recorded`,
-    viewCart: 'View cart',
-    goToPayment: 'Go to payment',
-    languageLabel: 'Language',
-    languageSearchPlaceholder: 'Search a language or keyword',
-    languageSearchLabel: 'Search languages',
-    languageHelper: 'Fully translated today: English & French. More coming soon.',
-    languageNoResults: 'No languages match that search.',
-    languageLive: 'Available now',
-    languageComingSoon: 'Coming soon'
-  },
-  fr: {
-    menu: 'Carte',
-    cart: 'Votre sélection',
-    name: 'Nom',
-    contact: 'Contact (email ou téléphone)',
-    payment: 'Paiement',
-    placeOrder: 'Passer la commande',
-    emptyCart: 'Choisissez un produit pour commencer votre commande.',
-    cartItems: (count) => `${count} article${count > 1 ? 's' : ''}`,
-    ledgerEmpty: 'Aucune commande pour le moment.',
-    ordersRecorded: (count) => `${count} commande${count > 1 ? 's' : ''} enregistrée${count > 1 ? 's' : ''}`,
-    viewCart: 'Voir le panier',
-    goToPayment: 'Aller au paiement',
-    preferenceEyebrow: 'Planifier votre visite',
-    preferenceHeading: 'Comment pouvons-nous préparer votre commande ?',
-    dineLabel: 'Où souhaitez-vous la déguster ?',
-    timingLabel: 'Quand souhaitez-vous être servi ?',
-    eatIn: 'Sur place',
-    takeOut: 'À emporter',
-    now: 'Maintenant',
-    later: 'Plus tard',
-    laterNote: 'Les commandes plus tard ne sont pas garanties.',
-    goOrder: 'Commencer ma commande',
-    languageLabel: 'Langue',
-    languageSearchPlaceholder: 'Rechercher une langue ou un mot-clé',
-    languageSearchLabel: 'Rechercher des langues',
-    languageHelper: 'Anglais et français sont prêts aujourd’hui. D’autres langues arrivent.',
-    languageNoResults: 'Aucune langue ne correspond à votre recherche.',
-    languageLive: 'Disponible',
-    languageComingSoon: 'Bientôt disponible'
-  }
-};
-
-dictionary.en.preferenceEyebrow = 'Plan your visit';
-dictionary.en.preferenceHeading = 'How can we prepare your order?';
-dictionary.en.dineLabel = 'Where will you enjoy it?';
-dictionary.en.timingLabel = 'When should we prepare it?';
-dictionary.en.eatIn = 'Eat in';
-dictionary.en.takeOut = 'Take out';
-dictionary.en.now = 'Now';
-dictionary.en.later = 'Later';
-dictionary.en.laterNote = 'Later pick-ups are not guaranteed.';
-dictionary.en.goOrder = 'Start order';
-dictionary.en.timeLabel = 'Choose a time today';
-dictionary.en.timeHint = 'Pick a 15-minute slot after the current time.';
-dictionary.en.timeUnavailable = 'No slots remain today.';
-dictionary.en.timeRequired = 'Please pick a time to continue.';
-dictionary.en.summaryTitle = 'Service preference';
-dictionary.en.summaryChange = 'Change';
-dictionary.en.summaryNow = 'Serve now';
-dictionary.en.summaryLaterPending = 'Later today';
-dictionary.en.summaryLaterAt = (time) => `Ready later at ${time}`;
-dictionary.en.summaryEatIn = 'Eat in';
-dictionary.en.summaryTakeOut = 'Take away';
-
-dictionary.fr.timeLabel = 'Choisissez une heure aujourd’hui';
-dictionary.fr.timeHint = 'Sélectionnez un créneau de 15 minutes après l’heure actuelle.';
-dictionary.fr.timeUnavailable = 'Plus de créneaux disponibles aujourd’hui.';
-dictionary.fr.timeRequired = 'Veuillez choisir un horaire pour continuer.';
-dictionary.fr.summaryTitle = 'Préférence de service';
-dictionary.fr.summaryChange = 'Modifier';
-dictionary.fr.summaryNow = 'Servir maintenant';
-dictionary.fr.summaryLaterPending = 'Plus tard aujourd’hui';
-dictionary.fr.summaryLaterAt = (time) => `Prêt pour ${time}`;
-dictionary.fr.summaryEatIn = 'Sur place';
-dictionary.fr.summaryTakeOut = 'À emporter';
+const translations = {};
 
 const menuGrid = document.getElementById('menu-grid');
 const cartContainer = document.getElementById('cart');
@@ -205,6 +121,7 @@ const languageCurrentLabel = document.getElementById('language-current-label');
 const languageCurrentCode = document.getElementById('language-current-code');
 const languageSearchLabel = document.getElementById('language-search-label');
 const languageSwitcher = document.getElementById('language-switcher');
+const languageSelectorLabel = document.getElementById('language-selector-label');
 const paymentBreakdownEl = document.getElementById('payment-breakdown');
 const salesTotal = document.getElementById('sales-total');
 const salesMeta = document.getElementById('sales-meta');
@@ -232,71 +149,321 @@ const preferenceSummaryTitle = document.getElementById('preference-summary-title
 const preferenceSummaryDine = document.getElementById('preference-summary-dine');
 const preferenceSummaryTime = document.getElementById('preference-summary-time');
 const preferenceSummaryChange = document.getElementById('preference-summary-change');
+const heroEyebrow = document.getElementById('hero-eyebrow');
+const heroHeading = document.getElementById('hero-heading');
+const heroLead = document.getElementById('hero-lead');
+const heroHours = document.getElementById('hero-hours');
+const heroSalesTitle = document.getElementById('hero-sales-title');
+const menuHeading = document.getElementById('menu-heading');
+const cartHeading = document.getElementById('cart-heading');
+const guestDetailsHeading = document.getElementById('guest-details-heading');
+const labelName = document.getElementById('label-name');
+const labelContact = document.getElementById('label-contact');
+const paymentHeading = document.getElementById('payment-heading');
+const ledgerHeading = document.getElementById('ledger-heading');
+const accountPanel = document.getElementById('account-panel');
+const accountHelper = document.getElementById('account-helper');
+const accountSelect = document.getElementById('account-select');
+const accountStatus = document.getElementById('account-status');
+const accountLoyalty = document.getElementById('account-loyalty');
+const accountLoyaltyTitle = document.getElementById('account-loyalty-title');
+const accountLoyaltyProgress = document.getElementById('account-loyalty-progress');
+const accountLoyaltyEligible = document.getElementById('account-loyalty-eligible');
+const accountHistory = document.getElementById('account-history');
+const accountHistoryTitle = document.getElementById('account-history-title');
+const accountHistoryList = document.getElementById('account-history-list');
+const accountHistoryEmpty = document.getElementById('account-history-empty');
+const usernameAccountForm = document.getElementById('username-account-form');
+const emailAccountForm = document.getElementById('email-account-form');
+const accountFeedback = document.getElementById('account-feedback');
+const accountHeading = document.getElementById('account-heading');
+const accountSelectLabel = document.getElementById('account-select-label');
+const accountCreateUsername = document.getElementById('account-create-username');
+const accountUsernameLabel = document.getElementById('account-username-label');
+const accountPasswordLabel = document.getElementById('account-password-label');
+const accountCreateEmail = document.getElementById('account-create-email');
+const accountEmailLabel = document.getElementById('account-email-label');
+const accountPasskeyLabel = document.getElementById('account-passkey-label');
+const accountPasskeyPublicLabel = document.getElementById('account-passkey-public-label');
+const accountUsernameSubmit = document.getElementById('account-username-submit');
+const accountEmailSubmit = document.getElementById('account-email-submit');
+const preferenceEyebrow = document.getElementById('preference-eyebrow');
+const preferenceHeading = document.getElementById('preference-heading');
+const preferenceDineLabel = document.getElementById('preference-dine-label');
+const preferenceTimingLabel = document.getElementById('preference-timing-label');
+const preferenceEatIn = document.getElementById('preference-eat-in');
+const preferenceTakeOut = document.getElementById('preference-take-out');
+const preferenceNow = document.getElementById('preference-now');
+const preferenceLater = document.getElementById('preference-later');
+const preferenceLaterNote = document.getElementById('preference-later-note');
+const preferenceSummaryDineText = document.getElementById('preference-summary-dine');
+const preferenceSummaryTimeText = document.getElementById('preference-summary-time');
 
-yearEl.textContent = new Date().getFullYear();
+(async function init() {
+  yearEl.textContent = new Date().getFullYear();
+  await ensureTranslations('en');
+  await applyLanguage('en', { skipMenu: true, skipSales: true });
+  bindFormEvents();
+  bindAccountEvents();
+  initializeLanguageSelector();
+  initializePreferenceOverlay();
+  renderCart();
+  renderPaymentFields('applePay');
+  await Promise.all([loadMenu(), refreshSales(), loadUsers()]);
+})();
 
-initializeLanguageSelector();
-initializePreferenceOverlay();
+function bindFormEvents() {
+  orderForm?.addEventListener('change', (event) => {
+    if (event.target.name === 'payment') {
+      renderPaymentFields(event.target.value);
+    }
+  });
 
-orderForm.addEventListener('change', (event) => {
-  if (event.target.name === 'payment') {
-    renderPaymentFields(event.target.value);
-  }
-});
+  orderForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!state.cart.length) return;
 
-orderForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  if (!state.cart.length) return;
+    submitButton.disabled = true;
+    formStatus.textContent = '';
 
-  submitButton.disabled = true;
-  formStatus.textContent = state.language === 'fr' ? 'Envoi de la commande…' : 'Sending order…';
+    const payload = buildOrderPayload();
 
-  const payload = buildOrderPayload();
+    try {
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.issues?.join(', ') || error.message || t('orderSubmitError'));
+      }
+      const data = await response.json();
+      state.cart = [];
+      renderCart();
+      await refreshSales();
+      if (state.selectedUserId) {
+        await fetchUserHistory(state.selectedUserId);
+      }
+      formStatus.textContent = `${t('orderSubmitSuccess')} (#${data.id})`;
+    } catch (error) {
+      console.error(error);
+      formStatus.textContent = error.message || t('orderSubmitError');
+    } finally {
+      submitButton.disabled = !state.cart.length;
+    }
+  });
 
+  mobileCartToggle?.addEventListener('click', () => {
+    document.getElementById('cart-heading')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  mobileCheckoutButton?.addEventListener('click', () => {
+    orderForm?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  preferenceSummaryChange?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    openPreferenceOverlay();
+  });
+  preferenceSummary?.addEventListener('click', () => openPreferenceOverlay());
+}
+
+function bindAccountEvents() {
+  accountSelect?.addEventListener('change', async (event) => {
+    state.selectedUserId = event.target.value || '';
+    updateAccountSummary();
+    if (state.selectedUserId) {
+      await fetchUserHistory(state.selectedUserId);
+    } else {
+      state.userHistory = [];
+      renderAccountHistory();
+    }
+  });
+
+  usernameAccountForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const formData = new FormData(usernameAccountForm);
+    const username = formData.get('username')?.toString().trim();
+    const password = formData.get('password')?.toString();
+    const issues = [];
+    if (!username || username.length < 6) {
+      issues.push(t('accountUsernameTooShort'));
+    }
+    if (!password || password.length < 8) {
+      issues.push(t('accountPasswordTooShort'));
+    }
+    if (issues.length) {
+      accountFeedback.textContent = `${t('accountErrors')} ${issues.join(' ')}`;
+      return;
+    }
+    await submitAccountForm('/api/users/username', {
+      username,
+      password
+    });
+    usernameAccountForm.reset();
+  });
+
+  emailAccountForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const formData = new FormData(emailAccountForm);
+    const email = formData.get('email')?.toString().trim();
+    const passkeyLabelValue = formData.get('passkeyLabel')?.toString().trim();
+    const passkeyPublicKey = formData.get('passkeyPublicKey')?.toString().trim();
+    const issues = [];
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      issues.push(t('accountEmailRequired'));
+    }
+    if (!passkeyLabelValue) {
+      issues.push(t('accountPasskeyRequired'));
+    }
+    if (!passkeyPublicKey) {
+      issues.push(t('accountPasskeyRequired'));
+    }
+    if (issues.length) {
+      accountFeedback.textContent = `${t('accountErrors')} ${issues.join(' ')}`;
+      return;
+    }
+    await submitAccountForm('/api/users/email-passkey', {
+      email,
+      passkeyLabel: passkeyLabelValue,
+      passkeyPublicKey
+    });
+    emailAccountForm.reset();
+  });
+}
+
+async function submitAccountForm(endpoint, payload) {
   try {
-    const response = await fetch('/api/orders', {
+    accountFeedback.textContent = '';
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.issues?.join(', ') || error.message || 'Unknown error');
+      throw new Error(error.issues?.join(', ') || error.message || t('accountErrors'));
     }
-
-    const data = await response.json();
-    state.cart = [];
-    renderCart();
-    await refreshSales();
-    formStatus.textContent =
-      state.language === 'fr'
-        ? `Commande ${data.id} confirmée. Préparation en cours.`
-        : `Order ${data.id} confirmed. We are preparing it now.`;
+    accountFeedback.textContent = t('accountSuccess');
+    await loadUsers();
   } catch (error) {
-    console.error(error);
-    formStatus.textContent = error.message;
-  } finally {
-    submitButton.disabled = !state.cart.length;
+    accountFeedback.textContent = error.message || t('accountErrors');
   }
-});
+}
 
-mobileCartToggle?.addEventListener('click', () => {
-  document.getElementById('cart-heading')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-});
+async function ensureTranslations(lang) {
+  if (translations[lang]) return translations[lang];
+  const response = await fetch(`/locales/${lang}.json`);
+  if (!response.ok) {
+    throw new Error(`Missing locale: ${lang}`);
+  }
+  const data = await response.json();
+  translations[lang] = data;
+  return data;
+}
 
-mobileCheckoutButton?.addEventListener('click', () => {
-  orderForm?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-});
+async function applyLanguage(lang, options = {}) {
+  await ensureTranslations('en');
+  const nextLang = languages.find((entry) => entry.code === lang && entry.available)
+    ? lang
+    : 'en';
+  await ensureTranslations(nextLang);
+  state.language = nextLang;
+  document.documentElement.lang = nextLang;
+  updateStaticCopy();
+  renderLanguageOptions();
+  updateLanguageBadge();
+  renderCart();
+  renderPaymentFields(orderForm.payment.value);
+  updatePreferenceCopy();
+  updatePreferenceSummary();
+  if (!options.skipMenu) {
+    await loadMenu();
+  }
+  if (!options.skipSales) {
+    await refreshSales();
+  }
+}
 
-preferenceSummaryChange?.addEventListener('click', (event) => {
-  event.stopPropagation();
-  openPreferenceOverlay();
-});
+function t(key, replacements = {}) {
+  const pack = translations[state.language] || {};
+  let template = pack[key];
+  if (template === undefined && state.language !== 'en') {
+    template = translations.en?.[key];
+  }
+  if (typeof template !== 'string') {
+    return template || '';
+  }
+  return template.replace(/\{(\w+)\}/g, (_, token) => (replacements[token] ?? `{${token}}`));
+}
 
-preferenceSummary?.addEventListener('click', () => {
-  openPreferenceOverlay();
-});
+function tp(key, count) {
+  const pack = translations[state.language]?.[key] || translations.en?.[key];
+  if (!pack || typeof pack !== 'object') {
+    return t(key, { count });
+  }
+  let template = pack.plural || '';
+  if (count === 0 && pack.zero) {
+    template = pack.zero;
+  } else if (count === 1 && pack.singular) {
+    template = pack.singular;
+  }
+  return template.replace(/\{(\w+)\}/g, (_, token) => {
+    if (token === 'count') return count;
+    return `{${token}}`;
+  });
+}
+
+function updateStaticCopy() {
+  if (heroEyebrow) heroEyebrow.textContent = t('heroEyebrow');
+  if (heroHeading) heroHeading.textContent = t('heroHeading');
+  if (heroLead) heroLead.textContent = t('heroLead');
+  if (heroHours) heroHours.textContent = t('heroHours');
+  if (heroSalesTitle) heroSalesTitle.textContent = t('heroSalesSnapshot');
+  if (menuHeading) menuHeading.textContent = t('menu');
+  if (cartHeading) cartHeading.textContent = t('cart');
+  if (guestDetailsHeading) guestDetailsHeading.textContent = t('guestDetails');
+  if (labelName) labelName.textContent = t('name');
+  if (labelContact) labelContact.textContent = t('contact');
+  if (paymentHeading) paymentHeading.textContent = t('payment');
+  if (ledgerHeading) ledgerHeading.textContent = t('ledgerHeading');
+  if (languageHelper) languageHelper.textContent = t('languageHelper');
+  if (languageEmpty) languageEmpty.textContent = t('languageNoResults');
+  if (languageSearchLabel) languageSearchLabel.textContent = t('languageSearchLabel');
+  if (languageSearchInput) languageSearchInput.placeholder = t('languageSearchPlaceholder');
+  if (languageSelectorLabel) languageSelectorLabel.textContent = t('languageLabel');
+  if (languageHint) languageHint.textContent = t('languageLabel');
+  if (accountHeading) accountHeading.textContent = t('accountHeading');
+  if (accountHelper) accountHelper.textContent = t('accountHelper');
+  if (accountSelectLabel) accountSelectLabel.textContent = t('accountSelectLabel');
+  if (accountCreateUsername) accountCreateUsername.textContent = t('accountCreateUsername');
+  if (accountUsernameLabel) accountUsernameLabel.textContent = t('accountUsernameLabel');
+  if (accountPasswordLabel) accountPasswordLabel.textContent = t('accountPasswordLabel');
+  if (accountUsernameSubmit) accountUsernameSubmit.textContent = t('accountRegister');
+  if (accountCreateEmail) accountCreateEmail.textContent = t('accountCreateEmail');
+  if (accountEmailLabel) accountEmailLabel.textContent = t('accountEmailLabel');
+  if (accountPasskeyLabel) accountPasskeyLabel.textContent = t('accountPasskeyLabel');
+  if (accountPasskeyPublicLabel) accountPasskeyPublicLabel.textContent = t('accountPasskeyPublicKeyLabel');
+  if (accountEmailSubmit) accountEmailSubmit.textContent = t('accountRegister');
+  if (accountLoyaltyTitle) accountLoyaltyTitle.textContent = t('accountLoyalty');
+  if (accountHistoryTitle) accountHistoryTitle.textContent = t('accountOrderHistoryTitle');
+  if (accountHistoryEmpty) accountHistoryEmpty.textContent = t('accountOrderHistoryEmpty');
+  if (preferenceEyebrow) preferenceEyebrow.textContent = t('preferenceEyebrow');
+  if (preferenceHeading) preferenceHeading.textContent = t('preferenceHeading');
+  if (preferenceDineLabel) preferenceDineLabel.textContent = t('dineLabel');
+  if (preferenceTimingLabel) preferenceTimingLabel.textContent = t('timingLabel');
+  if (preferenceEatIn) preferenceEatIn.textContent = t('eatIn');
+  if (preferenceTakeOut) preferenceTakeOut.textContent = t('takeOut');
+  if (preferenceNow) preferenceNow.textContent = t('now');
+  if (preferenceLater) preferenceLater.textContent = t('later');
+  if (preferenceLaterNote) preferenceLaterNote.textContent = t('laterNote');
+  if (preferenceSummaryTitle) preferenceSummaryTitle.textContent = t('summaryTitle');
+  if (preferenceSummaryChange) preferenceSummaryChange.textContent = t('summaryChange');
+  if (preferenceCTA) preferenceCTA.textContent = t('goOrder');
+  renderUserOptions();
+  updateAccountSummary();
+}
 
 function initializeLanguageSelector() {
   if (!languageToggleButton) return;
@@ -319,46 +486,20 @@ function initializeLanguageSelector() {
   });
 }
 
-function toggleLanguagePanel(shouldOpen) {
-  if (!languagePanel) return;
-  const openState = typeof shouldOpen === 'boolean' ? shouldOpen : languagePanel.hasAttribute('hidden');
-  if (openState) {
-    languagePanel.hidden = false;
-    languageToggleButton?.setAttribute('aria-expanded', 'true');
-    requestAnimationFrame(() => {
-      languageSearchInput?.focus();
-    });
-  } else {
-    languagePanel.hidden = true;
-    languageToggleButton?.setAttribute('aria-expanded', 'false');
-    if (languageSearchInput) {
-      languageSearchInput.value = '';
-    }
-    renderLanguageOptions();
-  }
-}
-
 function renderLanguageOptions() {
   if (!languageOptions) return;
-  const query = normalizeSearch(languageSearchInput?.value || '');
+  languageOptions.innerHTML = '';
+  const query = languageSearchInput?.value.trim().toLowerCase();
   const matches = languages.filter((lang) => {
     if (!query) return true;
-    return lang.keywords.some((keyword) => normalizeSearch(keyword).includes(query));
+    return lang.keywords.some((keyword) => keyword.includes(query));
   });
 
-  languageOptions.innerHTML = '';
-
   if (!matches.length) {
-    if (languageEmpty) {
-      languageEmpty.hidden = false;
-      languageEmpty.textContent = dictionary[state.language].languageNoResults;
-    }
+    languageEmpty.hidden = false;
     return;
   }
-
-  if (languageEmpty) {
-    languageEmpty.hidden = true;
-  }
+  languageEmpty.hidden = true;
 
   matches.forEach((lang) => {
     const option = document.createElement('button');
@@ -372,14 +513,12 @@ function renderLanguageOptions() {
         <span class="language-option__native">${lang.nativeLabel}</span>
       </span>
       <span class="language-option__status">${
-        lang.available ? dictionary[state.language].languageLive : dictionary[state.language].languageComingSoon
+        lang.available ? t('languageLive') : t('languageComingSoon')
       }</span>
     `;
-
     if (lang.code === state.language) {
       option.classList.add('is-active');
     }
-
     if (!lang.available) {
       option.classList.add('language-option--disabled');
       option.disabled = true;
@@ -389,22 +528,8 @@ function renderLanguageOptions() {
         selectLanguage(lang.code);
       });
     }
-
     languageOptions.appendChild(option);
   });
-}
-
-function selectLanguage(code) {
-  if (state.language === code) {
-    toggleLanguagePanel(false);
-    return;
-  }
-  state.language = code;
-  updateLanguageBadge();
-  updateCopy();
-  loadMenu();
-  refreshSales();
-  toggleLanguagePanel(false);
 }
 
 function updateLanguageBadge() {
@@ -416,28 +541,143 @@ function updateLanguageBadge() {
     languageCurrentCode.textContent = (current?.code || state.language).toUpperCase();
   }
   if (languageHint) {
-    languageHint.textContent = dictionary[state.language].languageLabel;
+    languageHint.textContent = t('languageLabel');
   }
 }
 
-function normalizeSearch(value) {
-  if (!value) return '';
-  return value
-    .toString()
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '');
+function toggleLanguagePanel(show) {
+  if (!languagePanel || !languageToggleButton) return;
+  languagePanel.hidden = !show;
+  languageToggleButton.setAttribute('aria-expanded', show ? 'true' : 'false');
+}
+
+function selectLanguage(code) {
+  toggleLanguagePanel(false);
+  if (state.language === code) return;
+  applyLanguage(code);
+}
+
+async function loadMenu() {
+  if (menuGrid) {
+    menuGrid.innerHTML = `<p>${t('menuLoading')}</p>`;
+  }
+  try {
+    const response = await fetch(`/api/menu?lang=${state.language}`);
+    const data = await response.json();
+    state.menu = data.items;
+    renderMenu();
+  } catch (error) {
+    console.error(error);
+    if (menuGrid) {
+      menuGrid.innerHTML = `<p>${t('menuError')}</p>`;
+    }
+  }
+}
+
+function renderMenu() {
+  if (!menuGrid) return;
+  menuGrid.innerHTML = '';
+  state.menu.forEach((item) => {
+    const card = document.createElement('article');
+    card.className = 'menu-card';
+    card.innerHTML = `
+      <img src="${item.image}" alt="${item.name}" loading="lazy" />
+      <div class="menu-card__body">
+        <div class="menu-card__header">
+          <div>
+            <h3>${item.name}</h3>
+            <p>${item.description}</p>
+          </div>
+          <strong>${formatCurrency(item.price)}</strong>
+        </div>
+        <p><strong>${t('compositionLabel')}:</strong> ${item.composition}</p>
+        <p><strong>${t('allergensLabel')}:</strong> ${item.allergens?.join(', ') || t('noAllergens')}</p>
+        <div class="menu-card__tags">
+          ${item.tags.map((tag) => `<span class="tag">${tag}</span>`).join('')}
+        </div>
+        <button type="button" data-id="${item.id}">${t('addToOrder')}</button>
+      </div>
+    `;
+    card.querySelector('button').addEventListener('click', () => addToCart(item));
+    menuGrid.appendChild(card);
+  });
+}
+
+function addToCart(item) {
+  const existing = state.cart.find((entry) => entry.id === item.id);
+  if (existing) {
+    existing.quantity += 1;
+  } else {
+    state.cart.push({ id: item.id, name: item.name, price: item.price, quantity: 1 });
+  }
+  renderCart();
+}
+
+function removeFromCart(id) {
+  state.cart = state.cart.filter((item) => item.id !== id);
+  renderCart();
+}
+
+function renderCart() {
+  if (!cartContainer) return;
+  cartContainer.innerHTML = '';
+  if (!state.cart.length) {
+    cartContainer.innerHTML = `<p>${t('emptyCart')}</p>`;
+    cartCount.textContent = tp('cartItems', 0);
+    cartTotal.textContent = formatCurrency(0);
+    submitButton.disabled = true;
+    updateMobileToolbar(0, 0);
+    return;
+  }
+
+  state.cart.forEach((item) => {
+    const row = document.createElement('div');
+    row.className = 'cart-item';
+    row.innerHTML = `
+      <div class="cart-item__info">
+        <strong>${item.name}</strong>
+        <span>${tp('cartItems', item.quantity)}</span>
+      </div>
+      <div>
+        <span>${formatCurrency(item.price * item.quantity)}</span>
+        <button type="button" aria-label="Remove" data-id="${item.id}">✕</button>
+      </div>
+    `;
+    row.querySelector('button').addEventListener('click', () => removeFromCart(item.id));
+    cartContainer.appendChild(row);
+  });
+
+  const totalItems = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+  const totalPrice = state.cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  cartCount.textContent = tp('cartItems', totalItems);
+  cartTotal.textContent = formatCurrency(totalPrice);
+  submitButton.disabled = false;
+  updateMobileToolbar(totalItems, totalPrice);
+}
+
+function updateMobileToolbar(count, total) {
+  if (!mobileToolbar) return;
+  mobileToolbarLabel.textContent = tp('cartItems', count);
+  mobileToolbarHint.textContent = t('viewCart');
+  mobileToolbarTotal.textContent = formatCurrency(total);
+  mobileToolbar.classList.toggle('mobile-toolbar--hidden', count === 0);
+  if (mobileCartToggle) {
+    mobileCartToggle.disabled = count === 0;
+  }
+  if (mobileCheckoutButton) {
+    mobileCheckoutButton.textContent = t('goToPayment');
+    mobileCheckoutButton.disabled = count === 0;
+  }
 }
 
 function buildOrderPayload() {
   const formData = new FormData(orderForm);
   const paymentMethod = formData.get('payment');
-  const paymentDetails = buildPaymentDetails(paymentMethod, formData);
+  const paymentDetailsPayload = buildPaymentDetails(paymentMethod, formData);
   const preference = getPreferencePayload();
-
   return {
-    customerName: formData.get('customerName')?.trim(),
+    userId: state.selectedUserId || null,
+    customerName: formData.get('customerName')?.toString().trim(),
     contact: formData.get('contact'),
     language: state.language,
     items: state.cart.map((item) => ({
@@ -447,7 +687,7 @@ function buildOrderPayload() {
     preference,
     payment: {
       method: paymentMethod,
-      details: paymentDetails
+      details: paymentDetailsPayload
     }
   };
 }
@@ -456,7 +696,6 @@ function getPreferencePayload() {
   const dine = state.preference.dine || 'eatIn';
   const timing = state.preference.timing || 'now';
   const confirmedAt = state.preference.confirmedAt || new Date().toISOString();
-
   return {
     dine,
     timing,
@@ -480,126 +719,42 @@ function buildPaymentDetails(method, formData) {
   return { deviceAccount: formData.get('appleDevice') || 'web-session' };
 }
 
-async function loadMenu() {
-  menuGrid.innerHTML = '<p>Loading menu…</p>';
-  try {
-    const response = await fetch(`/api/menu?lang=${state.language}`);
-    const data = await response.json();
-    state.menu = data.items;
-    renderMenu();
-  } catch (error) {
-    console.error(error);
-    menuGrid.innerHTML = '<p>Unable to load menu.</p>';
-  }
-}
-
-function renderMenu() {
-  menuGrid.innerHTML = '';
-  state.menu.forEach((item) => {
-    const card = document.createElement('article');
-    card.className = 'menu-card';
-    card.innerHTML = `
-      <img src="${item.image}" alt="${item.name}" loading="lazy" />
-      <div class="menu-card__body">
-        <div class="menu-card__header">
-          <div>
-            <h3>${item.name}</h3>
-            <p>${item.description}</p>
-          </div>
-          <strong>${formatCurrency(item.price)}</strong>
-        </div>
-        <p><strong>${translate('composition')}:</strong> ${item.composition}</p>
-        <p><strong>${translate('allergens')}:</strong> ${item.allergens?.join(', ') || translate('none')}</p>
-        <div class="menu-card__tags">
-          ${item.tags.map((tag) => `<span class="tag">${tag}</span>`).join('')}
-        </div>
-        <button type="button" data-id="${item.id}">${translate('add')}</button>
-      </div>
+function renderPaymentFields(method = 'applePay') {
+  if (!paymentDetails) return;
+  let markup = '';
+  if (method === 'creditCard') {
+    markup = `
+      <label>
+        ${t('paymentCardholder')}
+        <input type="text" name="cardholder" required />
+      </label>
+      <label>
+        ${t('paymentCardNumber')}
+        <input type="text" name="cardNumber" inputmode="numeric" required />
+      </label>
+      <label>
+        ${t('paymentExpiry')}
+        <input type="text" name="cardExpiry" placeholder="MM/AA" required />
+      </label>
+      <label>
+        ${t('paymentBrand')}
+        <input type="text" name="cardBrand" />
+      </label>
     `;
-
-    card.querySelector('button').addEventListener('click', () => addToCart(item));
-    menuGrid.appendChild(card);
-  });
-}
-
-function addToCart(item) {
-  const existing = state.cart.find((entry) => entry.id === item.id);
-  if (existing) {
-    existing.quantity += 1;
+  } else if (method === 'paypal') {
+    markup = `
+      <label>
+        ${t('paymentPaypal')}
+        <input type="email" name="paypalAccount" placeholder="you@example.com" required />
+      </label>
+    `;
   } else {
-    state.cart.push({ id: item.id, name: item.name, price: item.price, quantity: 1 });
-  }
-  renderCart();
-}
-
-function removeFromCart(id) {
-  state.cart = state.cart.filter((item) => item.id !== id);
-  renderCart();
-}
-
-function renderCart() {
-  cartContainer.innerHTML = '';
-
-  if (!state.cart.length) {
-    cartContainer.innerHTML = `<p>${translate('emptyCart')}</p>`;
-    cartCount.textContent = dictionary[state.language].cartItems(0);
-    cartTotal.textContent = formatCurrency(0);
-    submitButton.disabled = true;
-    updateMobileToolbar(0, 0);
-    return;
-  }
-
-  state.cart.forEach((item) => {
-    const row = document.createElement('div');
-    row.className = 'cart-item';
-    row.innerHTML = `
-      <div class="cart-item__info">
-        <strong>${item.name}</strong>
-        <span>${dictionary[state.language].cartItems(item.quantity)}</span>
-      </div>
-      <div>
-        <span>${formatCurrency(item.price * item.quantity)}</span>
-        <button type="button" aria-label="Remove" data-id="${item.id}">✕</button>
-      </div>
+    markup = `
+      <p>${t('paymentAppleNote')}</p>
+      <input type="hidden" name="appleDevice" value="web-device" />
     `;
-    row.querySelector('button').addEventListener('click', () => removeFromCart(item.id));
-    cartContainer.appendChild(row);
-  });
-
-  const totalItems = state.cart.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = state.cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
-  cartCount.textContent = dictionary[state.language].cartItems(totalItems);
-  cartTotal.textContent = formatCurrency(totalPrice);
-  submitButton.disabled = false;
-  updateMobileToolbar(totalItems, totalPrice);
-}
-
-function updateCopy() {
-  document.getElementById('menu-heading').textContent = dictionary[state.language].menu;
-  document.getElementById('cart-heading').textContent = dictionary[state.language].cart;
-  document.getElementById('label-name').textContent = dictionary[state.language].name;
-  document.getElementById('label-contact').textContent = dictionary[state.language].contact;
-  document.getElementById('payment-heading').textContent = dictionary[state.language].payment;
-  submitButton.textContent = dictionary[state.language].placeOrder;
-  if (languageSearchInput) {
-    languageSearchInput.placeholder = dictionary[state.language].languageSearchPlaceholder;
   }
-  if (languageSearchLabel) {
-    languageSearchLabel.textContent = dictionary[state.language].languageSearchLabel;
-  }
-  if (languageHelper) {
-    languageHelper.textContent = dictionary[state.language].languageHelper;
-  }
-  if (languageEmpty) {
-    languageEmpty.textContent = dictionary[state.language].languageNoResults;
-  }
-  updateLanguageBadge();
-  renderLanguageOptions();
-  document.documentElement.setAttribute('lang', state.language === 'fr' ? 'fr' : 'en');
-  renderCart();
-  renderPaymentFields(orderForm.payment.value);
-  updatePreferenceCopy();
+  paymentDetails.innerHTML = markup;
 }
 
 function updatePreferenceSummary() {
@@ -609,99 +764,26 @@ function updatePreferenceSummary() {
     return;
   }
   preferenceSummary.hidden = false;
-  if (preferenceSummaryTitle) {
-    preferenceSummaryTitle.textContent = dictionary[state.language].summaryTitle;
-  }
-  if (preferenceSummaryChange) {
-    preferenceSummaryChange.textContent = dictionary[state.language].summaryChange;
-  }
-  const dineText =
-    state.preference.dine === 'takeOut'
-      ? dictionary[state.language].summaryTakeOut
-      : dictionary[state.language].summaryEatIn;
+  const dineText = state.preference.dine === 'takeOut' ? t('summaryTakeOut') : t('summaryEatIn');
   let timeText;
   if (state.preference.timing === 'later') {
     timeText = state.preference.timeSlot
-      ? dictionary[state.language].summaryLaterAt(formatSlotForDisplay(state.preference.timeSlot))
-      : dictionary[state.language].summaryLaterPending;
+      ? t('summaryLaterAt', { time: formatSlotForDisplay(state.preference.timeSlot) })
+      : t('summaryLaterPending');
   } else {
-    timeText = dictionary[state.language].summaryNow;
+    timeText = t('summaryNow');
   }
-  if (preferenceSummaryDine) {
-    preferenceSummaryDine.textContent = dineText;
+  if (preferenceSummaryDineText) {
+    preferenceSummaryDineText.textContent = dineText;
   }
-  if (preferenceSummaryTime) {
-    preferenceSummaryTime.textContent = timeText;
+  if (preferenceSummaryTimeText) {
+    preferenceSummaryTimeText.textContent = timeText;
   }
-}
-
-function updateMobileToolbar(count, total) {
-  if (!mobileToolbar) return;
-  mobileToolbarLabel.textContent = dictionary[state.language].cartItems(count);
-  mobileToolbarHint.textContent = dictionary[state.language].viewCart;
-  mobileToolbarTotal.textContent = formatCurrency(total);
-  mobileToolbar.classList.toggle('mobile-toolbar--hidden', count === 0);
-  if (mobileCartToggle) {
-    mobileCartToggle.disabled = count === 0;
-  }
-  if (mobileCheckoutButton) {
-    mobileCheckoutButton.textContent = dictionary[state.language].goToPayment;
-    mobileCheckoutButton.disabled = count === 0;
-  }
-}
-
-function translate(key) {
-  const copy = {
-    composition: { en: 'Composition', fr: 'Composition' },
-    allergens: { en: 'Allergens', fr: 'Allergènes' },
-    none: { en: 'None declared', fr: 'Aucun déclaré' },
-    add: { en: 'Add to order', fr: 'Ajouter' }
-  };
-  return copy[key][state.language];
-}
-
-function renderPaymentFields(method = 'applePay') {
-  let markup = '';
-  if (method === 'creditCard') {
-    markup = `
-      <label>
-        ${state.language === 'fr' ? 'Titulaire de la carte' : 'Cardholder'}
-        <input type="text" name="cardholder" required />
-      </label>
-      <label>
-        ${state.language === 'fr' ? 'Numéro de carte' : 'Card number'}
-        <input type="text" name="cardNumber" inputmode="numeric" required />
-      </label>
-      <label>
-        ${state.language === 'fr' ? 'Expiration' : 'Expiry'}
-        <input type="text" name="cardExpiry" placeholder="MM/AA" required />
-      </label>
-      <label>
-        ${state.language === 'fr' ? 'Réseau' : 'Brand'}
-        <input type="text" name="cardBrand" />
-      </label>
-    `;
-  } else if (method === 'paypal') {
-    markup = `
-      <label>
-        PayPal
-        <input type="email" name="paypalAccount" placeholder="you@example.com" required />
-      </label>
-    `;
-  } else {
-    markup = `
-      <p>${state.language === 'fr' ? 'Apple Pay utilisera l’identifiant de votre appareil.' : 'Apple Pay will use your device account number.'}</p>
-      <input type="hidden" name="appleDevice" value="web-device" />
-    `;
-  }
-  paymentDetails.innerHTML = markup;
 }
 
 function updatePreferenceCopy() {
   if (!preferenceOverlay) return;
   const labels = {
-    'preference-eyebrow': 'preferenceEyebrow',
-    'preference-heading': 'preferenceHeading',
     'preference-dine-label': 'dineLabel',
     'preference-timing-label': 'timingLabel',
     'preference-eat-in': 'eatIn',
@@ -717,22 +799,21 @@ function updatePreferenceCopy() {
   Object.entries(labels).forEach(([id, key]) => {
     const el = document.getElementById(id);
     if (el) {
-      el.textContent = dictionary[state.language][key];
+      el.textContent = t(key);
     }
   });
   if (preferenceCTA) {
-    preferenceCTA.textContent = dictionary[state.language].goOrder;
+    preferenceCTA.textContent = t('goOrder');
   }
   if (preferenceSummaryTitle) {
-    preferenceSummaryTitle.textContent = dictionary[state.language].summaryTitle;
+    preferenceSummaryTitle.textContent = t('summaryTitle');
   }
   if (preferenceSummaryChange) {
-    preferenceSummaryChange.textContent = dictionary[state.language].summaryChange;
+    preferenceSummaryChange.textContent = t('summaryChange');
   }
   if (state.preference.timing === 'later') {
     renderTimeSlots();
   }
-  updatePreferenceSummary();
 }
 
 function initializePreferenceOverlay() {
@@ -745,7 +826,6 @@ function initializePreferenceOverlay() {
       setPreferenceValue(group, value, button);
     });
   });
-
   preferenceCTA?.addEventListener('click', () => {
     if (!state.preference.dine) {
       selectDefaultPreference('dine', 'eatIn');
@@ -848,16 +928,16 @@ function renderTimeSlots() {
   const slots = generateTimeSlots();
   timeSlotList.innerHTML = '';
   if (timeSlotEmptyText) {
-    timeSlotEmptyText.textContent = dictionary[state.language].timeUnavailable;
+    timeSlotEmptyText.textContent = t('timeUnavailable');
   }
   if (timeSlotErrorText) {
-    timeSlotErrorText.textContent = dictionary[state.language].timeRequired;
+    timeSlotErrorText.textContent = t('timeRequired');
   }
   if (timeSlotLabel) {
-    timeSlotLabel.textContent = dictionary[state.language].timeLabel;
+    timeSlotLabel.textContent = t('timeLabel');
   }
   if (timeSlotHint) {
-    timeSlotHint.textContent = dictionary[state.language].timeHint;
+    timeSlotHint.textContent = t('timeHint');
   }
   if (!slots.length) {
     if (timeSlotEmpty) {
@@ -895,18 +975,15 @@ function generateTimeSlots() {
   const end = new Date(now);
   end.setHours(23, 45, 0, 0);
   if (now > end) return [];
-
   const slots = [];
   const nextSlot = new Date(now);
   const remainder = nextSlot.getMinutes() % 15;
   const increment = remainder === 0 ? 15 : 15 - remainder;
   nextSlot.setMinutes(nextSlot.getMinutes() + increment, 0, 0);
-
   while (nextSlot <= end) {
     slots.push(new Date(nextSlot).toISOString());
     nextSlot.setMinutes(nextSlot.getMinutes() + 15);
   }
-
   return slots;
 }
 
@@ -926,7 +1003,8 @@ function showTimeSlotError(isVisible) {
 function recordPreferenceAttempt() {
   const payload = {
     language: state.language,
-    preference: getPreferencePayload()
+    preference: getPreferencePayload(),
+    userId: state.selectedUserId || null
   };
   fetch('/api/order-attempts', {
     method: 'POST',
@@ -949,19 +1027,18 @@ async function refreshSales() {
     const response = await fetch('/api/sales');
     const data = await response.json();
     salesTotal.textContent = formatCurrency(data.totalRevenue);
-    salesMeta.textContent = dictionary[state.language].ordersRecorded(data.totalOrders);
+    salesMeta.textContent = tp('ordersRecorded', data.totalOrders);
     paymentBreakdownEl.innerHTML = Object.entries(data.paymentBreakdown)
-      .map(([method, amount]) => `<span class="payment-chip">${method}: ${formatCurrency(amount)}</span>`)
+      .map(([method, amount]) => `<span class="payment-chip">${formatPaymentChip(method, amount)}</span>`)
       .join('');
-
     if (!data.lastTwentyOrders.length) {
-      ledgerContainer.innerHTML = `<p>${dictionary[state.language].ledgerEmpty}</p>`;
+      ledgerContainer.innerHTML = `<p>${t('ledgerEmpty')}</p>`;
     } else {
       ledgerContainer.innerHTML = data.lastTwentyOrders
         .map(
           (entry) => `
           <article class="ledger-card">
-            <p><strong>${formatCurrency(entry.total)}</strong> · ${entry.method}</p>
+            <p><strong>${formatCurrency(entry.total)}</strong> · ${formatPaymentMethod(entry.method)}</p>
             <p>${new Date(entry.createdAt).toLocaleString()}</p>
             <p class="muted">${entry.orderId}</p>
           </article>
@@ -974,8 +1051,130 @@ async function refreshSales() {
   }
 }
 
-updateCopy();
-renderPaymentFields('applePay');
-renderCart();
-loadMenu();
-refreshSales();
+function formatPaymentMethod(method) {
+  const labels = {
+    applePay: 'Apple Pay',
+    creditCard: state.language === 'fr' ? 'Carte bancaire' : 'Credit card',
+    paypal: 'PayPal'
+  };
+  return labels[method] || method;
+}
+
+function formatPaymentChip(method, amount) {
+  return t('paymentChip', { method: formatPaymentMethod(method), amount: formatCurrency(amount) });
+}
+
+async function loadUsers() {
+  try {
+    const response = await fetch('/api/users');
+    const data = await response.json();
+    state.users = data;
+    if (state.selectedUserId && !state.users.some((user) => user.id === state.selectedUserId)) {
+      state.selectedUserId = '';
+      state.userHistory = [];
+    }
+    renderUserOptions();
+    updateAccountSummary();
+    if (state.selectedUserId) {
+      await fetchUserHistory(state.selectedUserId);
+    }
+  } catch (error) {
+    console.error('Unable to load users', error);
+  }
+}
+
+function renderUserOptions() {
+  if (!accountSelect) return;
+  accountSelect.innerHTML = '';
+  const placeholderOption = document.createElement('option');
+  placeholderOption.value = '';
+  placeholderOption.textContent = t('accountSelectPlaceholder');
+  accountSelect.appendChild(placeholderOption);
+  state.users.forEach((user) => {
+    const option = document.createElement('option');
+    option.value = user.id;
+    option.textContent = user.username || user.email;
+    if (user.id === state.selectedUserId) {
+      option.selected = true;
+    }
+    accountSelect.appendChild(option);
+  });
+}
+
+async function fetchUserHistory(userId) {
+  try {
+    const response = await fetch(`/api/users/${userId}/orders`);
+    if (!response.ok) {
+      throw new Error('Unable to load history');
+    }
+    const data = await response.json();
+    state.userHistory = data;
+    renderAccountHistory();
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+function getSelectedUser() {
+  return state.users.find((user) => user.id === state.selectedUserId);
+}
+
+function updateAccountSummary() {
+  const user = getSelectedUser();
+  if (!accountStatus) return;
+  if (!user) {
+    accountStatus.textContent = t('accountStatusNone');
+    if (accountLoyalty) accountLoyalty.hidden = true;
+    if (accountHistory) accountHistory.hidden = true;
+    return;
+  }
+  const displayName = user.username || user.email;
+  accountStatus.textContent = t('accountStatusActive', { name: displayName });
+  renderLoyalty(user);
+  renderAccountHistory();
+}
+
+function renderLoyalty(user) {
+  if (!accountLoyalty) return;
+  accountLoyalty.hidden = false;
+  const loyalty = user.loyalty || { drinkCount: 0, nextRewardIn: 10, drinksToReward: 10 };
+  const drinksToReward = loyalty.drinksToReward || 10;
+  const remaining = typeof loyalty.nextRewardIn === 'number' ? loyalty.nextRewardIn : drinksToReward;
+  accountLoyaltyProgress.textContent = t('accountLoyaltyProgress', {
+    count: loyalty.drinkCount,
+    remaining
+  });
+  const eligible = remaining === 0;
+  accountLoyaltyEligible.hidden = !eligible;
+  if (!eligible) {
+    accountLoyaltyEligible.textContent = '';
+  } else {
+    accountLoyaltyEligible.textContent = t('accountLoyaltyEligible');
+  }
+}
+
+function renderAccountHistory() {
+  if (!accountHistory) return;
+  const user = getSelectedUser();
+  if (!user) {
+    accountHistory.hidden = true;
+    return;
+  }
+  accountHistory.hidden = false;
+  if (!state.userHistory.length) {
+    accountHistoryEmpty.textContent = t('accountOrderHistoryEmpty');
+    accountHistoryEmpty.hidden = false;
+    accountHistoryList.innerHTML = '';
+    return;
+  }
+  accountHistoryEmpty.hidden = true;
+  accountHistoryList.innerHTML = state.userHistory
+    .slice()
+    .reverse()
+    .map((entry) => {
+      const total = formatCurrency(entry.total || 0);
+      const when = new Date(entry.createdAt).toLocaleString(state.language === 'fr' ? 'fr-FR' : 'en-GB');
+      return `<li>${t('accountHistoryEntry', { total, createdAt: when })}</li>`;
+    })
+    .join('');
+}

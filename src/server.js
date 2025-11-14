@@ -1,17 +1,19 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { randomUUID } = require('crypto');
+const { randomUUID, createHash } = require('crypto');
 
 const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0';
 const ROOT = path.join(__dirname, '..');
 const PUBLIC_DIR = path.join(ROOT, 'public');
 const DATA_DIR = path.join(ROOT, 'data');
-const MENU_FILE = path.join(DATA_DIR, 'menu.json');
+const PRODUCTS_FILE = path.join(DATA_DIR, 'products.json');
+const PRODUCT_TRANSLATIONS_FILE = path.join(DATA_DIR, 'product-translations.json');
 const ORDERS_FILE = path.join(DATA_DIR, 'orders.json');
 const LEDGER_FILE = path.join(DATA_DIR, 'sales-ledger.json');
 const ATTEMPTS_FILE = path.join(DATA_DIR, 'order-attempts.json');
+const USERS_FILE = path.join(DATA_DIR, 'users.json');
 
 const SUPPORTED_LANGUAGES = ['en', 'fr'];
 const DINE_OPTIONS = ['eatIn', 'takeOut'];
@@ -44,6 +46,76 @@ function handleApi(req, res) {
       updatedAt: new Date().toISOString(),
       items
     });
+  }
+
+  if (req.method === 'GET' && url.pathname === '/api/users') {
+    const users = getUsers();
+    return sendJson(
+      res,
+      200,
+      users.map((user) => sanitizeUser(user))
+    );
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/users/username') {
+    return collectBody(req)
+      .then((body) => {
+        let payload;
+        try {
+          payload = JSON.parse(body || '{}');
+        } catch (error) {
+          return sendJson(res, 400, { message: 'Invalid JSON payload.' });
+        }
+
+        const result = createUsernameUser(payload);
+        if (!result.valid) {
+          return sendJson(res, 400, { message: 'Invalid user data.', issues: result.issues });
+        }
+
+        return sendJson(res, 201, sanitizeUser(result.user));
+      })
+      .catch((err) => {
+        console.error('Failed to create username user', err);
+        return sendJson(res, 500, { message: 'Unable to create user.' });
+      });
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/users/email-passkey') {
+    return collectBody(req)
+      .then((body) => {
+        let payload;
+        try {
+          payload = JSON.parse(body || '{}');
+        } catch (error) {
+          return sendJson(res, 400, { message: 'Invalid JSON payload.' });
+        }
+
+        const result = createEmailPasskeyUser(payload);
+        if (!result.valid) {
+          return sendJson(res, 400, { message: 'Invalid user data.', issues: result.issues });
+        }
+
+        return sendJson(res, 201, sanitizeUser(result.user));
+      })
+      .catch((err) => {
+        console.error('Failed to create passkey user', err);
+        return sendJson(res, 500, { message: 'Unable to create user.' });
+      });
+  }
+
+  if (
+    req.method === 'GET' &&
+    url.pathname.startsWith('/api/users/') &&
+    url.pathname.endsWith('/orders')
+  ) {
+    const parts = url.pathname.split('/').filter(Boolean);
+    const userId = parts.length >= 4 ? parts[2] : null;
+    const users = getUsers();
+    const user = users.find((entry) => entry.id === userId);
+    if (!user) {
+      return sendJson(res, 404, { message: 'User not found.' });
+    }
+    return sendJson(res, 200, user.orderHistory || []);
   }
 
   if (req.method === 'GET' && url.pathname === '/api/orders') {
@@ -177,8 +249,14 @@ function bootstrapDataFiles() {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
 
-  if (!fs.existsSync(MENU_FILE)) {
-    throw new Error('Menu file missing. Please seed data/menu.json.');
+  if (!fs.existsSync(PRODUCTS_FILE)) {
+    throw new Error('Products file missing. Please seed data/products.json.');
+  }
+
+  if (!fs.existsSync(PRODUCT_TRANSLATIONS_FILE)) {
+    throw new Error(
+      'Product translations file missing. Please seed data/product-translations.json.'
+    );
   }
 
   if (!fs.existsSync(ORDERS_FILE)) {
@@ -202,6 +280,10 @@ function bootstrapDataFiles() {
   if (!fs.existsSync(ATTEMPTS_FILE)) {
     writeJson(ATTEMPTS_FILE, []);
   }
+
+  if (!fs.existsSync(USERS_FILE)) {
+    writeJson(USERS_FILE, []);
+  }
 }
 
 function normaliseLanguage(lang) {
@@ -210,20 +292,23 @@ function normaliseLanguage(lang) {
 }
 
 function getMenuForLanguage(lang) {
-  const menu = readJson(MENU_FILE);
-  return menu.map((item) => {
-    const translation = item.translations[lang] || item.translations.en;
+  const products = readJson(PRODUCTS_FILE);
+  const translationIndex = buildTranslationIndex();
+
+  return products.map((product) => {
+    const translations = translationIndex.get(product.id) || {};
+    const translation = translations[lang] || translations.en || {};
     return {
-      id: item.id,
-      sku: item.sku,
-      price: item.price,
-      image: item.image,
-      category: item.category,
-      tags: item.tags,
-      name: translation.name,
-      description: translation.description,
-      composition: translation.composition,
-      allergens: translation.allergens,
+      id: product.id,
+      sku: product.sku,
+      price: product.price,
+      image: product.image,
+      category: product.category,
+      tags: product.tags,
+      name: translation.name || product.id,
+      description: translation.description || '',
+      composition: translation.composition || '',
+      allergens: translation.allergens || [],
       language: lang
     };
   });
@@ -245,18 +330,26 @@ function validateOrder(order) {
     issues.push('A valid payment method is required.');
   }
 
-  const menu = readJson(MENU_FILE);
-  const menuIds = new Set(menu.map((item) => item.id));
+  const products = readJson(PRODUCTS_FILE);
+  const productIds = new Set(products.map((item) => item.id));
+  const users = getUsers();
 
   if (Array.isArray(order.items)) {
     order.items.forEach((item, index) => {
-      if (!menuIds.has(item.menuItemId)) {
+      if (!productIds.has(item.menuItemId)) {
         issues.push(`Item at position ${index + 1} is invalid.`);
       }
       if (typeof item.quantity !== 'number' || item.quantity <= 0) {
         issues.push(`Quantity for item ${index + 1} must be a positive number.`);
       }
     });
+  }
+
+  if (order.userId) {
+    const hasUser = users.some((user) => user.id === order.userId);
+    if (!hasUser) {
+      issues.push('User reference is invalid.');
+    }
   }
 
   issues.push(...validatePreferencePayload(order.preference));
@@ -287,19 +380,23 @@ function validatePreferencePayload(preference) {
 }
 
 function persistOrder(orderPayload) {
-  const menu = readJson(MENU_FILE);
-  const menuMap = new Map(menu.map((item) => [item.id, item]));
+  const products = readJson(PRODUCTS_FILE);
+  const productMap = new Map(products.map((item) => [item.id, item]));
+  const translationIndex = buildTranslationIndex();
   const ledger = readJson(LEDGER_FILE);
   const orders = readJson(ORDERS_FILE);
+  const users = getUsers();
 
   const language = normaliseLanguage(orderPayload.language);
 
   const items = orderPayload.items.map((entry) => {
-    const menuItem = menuMap.get(entry.menuItemId);
+    const menuItem = productMap.get(entry.menuItemId);
+    const translations = translationIndex.get(menuItem.id) || {};
+    const translation = translations[language] || translations.en || {};
     return {
       menuItemId: menuItem.id,
       sku: menuItem.sku,
-      name: menuItem.translations[language]?.name || menuItem.translations.en.name,
+      name: translation.name || menuItem.id,
       quantity: entry.quantity,
       notes: entry.notes || '',
       unitPrice: menuItem.price,
@@ -318,6 +415,7 @@ function persistOrder(orderPayload) {
     contact: orderPayload.contact || {},
     language,
     preference,
+    userId: orderPayload.userId || null,
     items,
     totals: {
       currency: 'EUR',
@@ -337,6 +435,10 @@ function persistOrder(orderPayload) {
 
   orders.push(newOrder);
   writeJson(ORDERS_FILE, orders);
+
+  if (orderPayload.userId) {
+    updateUserWithOrder(orderPayload.userId, newOrder, items, productMap, users);
+  }
 
   ledger.totalOrders += 1;
   ledger.totalRevenue = Number((ledger.totalRevenue + newOrder.totals.grandTotal).toFixed(2));
@@ -360,6 +462,7 @@ function persistOrderAttempt(payload) {
     id: randomUUID(),
     language: normaliseLanguage(payload.language),
     preference: normalisePreference(payload.preference),
+    userId: payload.userId || null,
     createdAt: new Date().toISOString()
   };
   attempts.push(attempt);
@@ -448,6 +551,158 @@ function readJson(filePath) {
 
 function writeJson(filePath, data) {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+}
+
+function buildTranslationIndex() {
+  const translations = readJson(PRODUCT_TRANSLATIONS_FILE);
+  const index = new Map();
+  translations.forEach((entry) => {
+    if (!index.has(entry.productId)) {
+      index.set(entry.productId, {});
+    }
+    index.get(entry.productId)[entry.language] = entry;
+  });
+  return index;
+}
+
+function createUsernameUser(payload) {
+  const issues = [];
+  const username = typeof payload.username === 'string' ? payload.username.trim() : '';
+  const password = typeof payload.password === 'string' ? payload.password : '';
+
+  if (username.length < 6) {
+    issues.push('Username must be at least 6 characters.');
+  }
+  if (!password || password.length < 8) {
+    issues.push('Password must be at least 8 characters.');
+  }
+
+  const users = getUsers();
+  if (users.some((user) => user.username?.toLowerCase() === username.toLowerCase())) {
+    issues.push('Username already exists.');
+  }
+
+  if (issues.length) {
+    return { valid: false, issues };
+  }
+
+  const user = {
+    id: randomUUID(),
+    type: 'username',
+    username,
+    passwordHash: hashPassword(password),
+    createdAt: new Date().toISOString(),
+    loyalty: createDefaultLoyalty(),
+    orderHistory: []
+  };
+
+  users.push(user);
+  writeJson(USERS_FILE, users);
+
+  return { valid: true, user };
+}
+
+function createEmailPasskeyUser(payload) {
+  const issues = [];
+  const email = typeof payload.email === 'string' ? payload.email.trim().toLowerCase() : '';
+  const passkeyLabel = typeof payload.passkeyLabel === 'string' ? payload.passkeyLabel.trim() : '';
+  const passkeyPublicKey = typeof payload.passkeyPublicKey === 'string' ? payload.passkeyPublicKey.trim() : '';
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    issues.push('A valid email is required.');
+  }
+  if (!passkeyPublicKey) {
+    issues.push('Passkey data is required.');
+  }
+
+  const users = getUsers();
+  if (users.some((user) => user.email === email)) {
+    issues.push('Email already exists.');
+  }
+
+  if (issues.length) {
+    return { valid: false, issues };
+  }
+
+  const user = {
+    id: randomUUID(),
+    type: 'email',
+    email,
+    passkey: {
+      label: passkeyLabel || 'Passkey',
+      publicKey: passkeyPublicKey,
+      createdAt: new Date().toISOString()
+    },
+    createdAt: new Date().toISOString(),
+    loyalty: createDefaultLoyalty(),
+    orderHistory: []
+  };
+
+  users.push(user);
+  writeJson(USERS_FILE, users);
+
+  return { valid: true, user };
+}
+
+function getUsers() {
+  return readJson(USERS_FILE);
+}
+
+function sanitizeUser(user) {
+  return {
+    id: user.id,
+    type: user.type,
+    username: user.username || null,
+    email: user.email || null,
+    loyalty: user.loyalty || createDefaultLoyalty(),
+    createdAt: user.createdAt
+  };
+}
+
+function createDefaultLoyalty() {
+  return {
+    drinkCount: 0,
+    drinksToReward: 10,
+    rewardsEarned: 0,
+    nextRewardIn: 10
+  };
+}
+
+function updateUserWithOrder(userId, order, items, productMap, users) {
+  const user = users.find((entry) => entry.id === userId);
+  if (!user) {
+    return;
+  }
+
+  user.orderHistory = user.orderHistory || [];
+  user.orderHistory.push({
+    orderId: order.id,
+    total: order.totals.grandTotal,
+    createdAt: order.createdAt,
+    paymentMethod: order.payment.method
+  });
+  user.orderHistory = user.orderHistory.slice(-50);
+
+  user.loyalty = user.loyalty || createDefaultLoyalty();
+  const drinksPurchased = calculateDrinkCount(items, productMap);
+  user.loyalty.drinkCount += drinksPurchased;
+  user.loyalty.rewardsEarned = Math.floor(user.loyalty.drinkCount / user.loyalty.drinksToReward);
+  const remainder = user.loyalty.drinkCount % user.loyalty.drinksToReward;
+  user.loyalty.nextRewardIn = remainder === 0 ? 0 : user.loyalty.drinksToReward - remainder;
+  writeJson(USERS_FILE, users);
+}
+
+function calculateDrinkCount(items, productMap) {
+  return items.reduce((count, item) => {
+    const product = productMap.get(item.menuItemId);
+    if (!product) return count;
+    const isDrink = product.category === 'coffee' || product.tags?.includes('drink');
+    return isDrink ? count + item.quantity : count;
+  }, 0);
+}
+
+function hashPassword(password) {
+  return createHash('sha256').update(password).digest('hex');
 }
 
 function collectBody(req) {
