@@ -1,0 +1,272 @@
+[
+  {
+    "productId": "espresso",
+    "language": "en",
+    "name": "Signature Espresso",
+    "description": "A double shot of Arabica beans roasted in Paris for a smooth, intense pick-me-up.",
+    "composition": "Arabica espresso",
+    "allergens": [],
+    "modifiers": [
+      {
+        "id": "size",
+        "label": "Pick a size",
+        "helper": "Solo or doppio shot",
+        "options": [
+          { "id": "solo", "label": "Solo (single)" },
+          { "id": "doppio", "label": "Doppio (double)" }
+        ]
+      },
+      {
+        "id": "extras",
+        "label": "Extras",
+        "helper": "Choose up to two",
+        "options": [
+          { "id": "extra_shot", "label": "Extra ristretto shot" },
+          { "id": "vanilla", "label": "Madagascar vanilla" },
+          { "id": "tonka", "label": "Tonka bean syrup" }
+        ]
+      }
+    ]
+  },
+  {
+    "productId": "espresso",
+    "language": "fr",
+    "name": "Espresso Signature",
+    "description": "Double shot de grains arabica torréfiés à Paris pour un réveil intense et soyeux.",
+    "composition": "Espresso arabica",
+    "allergens": [],
+    "modifiers": [
+      {
+        "id": "size",
+        "label": "Choisissez la taille",
+        "helper": "Solo ou doppio",
+        "options": [
+          { "id": "solo", "label": "Solo" },
+          { "id": "doppio", "label": "Doppio" }
+        ]
+      },
+      {
+        "id": "extras",
+        "label": "Suppléments",
+        "helper": "Jusqu’à deux choix",
+        "options": [
+          { "id": "extra_shot", "label": "Shot supplémentaire" },
+          { "id": "vanilla", "label": "Vanille de Madagascar" },
+          { "id": "tonka", "label": "Sirop fève tonka" }
+        ]
+      }
+    ]
+  },
+  {
+    "productId": "croissant",
+    "language": "en",
+    "name": "AOP Butter Croissant",
+    "description": "Flaky viennoiserie layered with Brittany AOP butter, baked fresh hourly.",
+    "composition": "Wheat flour, butter, milk, yeast, sugar, salt",
+    "allergens": ["gluten", "milk"]
+  },
+  {
+    "productId": "croissant",
+    "language": "fr",
+    "name": "Croissant au beurre AOP",
+    "description": "Viennoiserie feuilletée au beurre AOP de Bretagne, cuite chaque heure.",
+    "composition": "Farine de blé, beurre, lait, levure, sucre, sel",
+    "allergens": ["gluten", "lait"]
+  },
+  {
+    "productId": "tartine",
+    "language": "en",
+    "name": "Provençal Tartine",
+    "description": "Toasted levain with confit tomatoes, chèvre frais, basil oil, and micro greens.",
+    "composition": "Levain bread, confit tomatoes, goat cheese, basil oil, greens",
+    "allergens": ["gluten", "milk"]
+  },
+  {
+    "productId": "tartine",
+    "language": "fr",
+    "name": "Tartine Provençale",
+    "description": "Levain toasté, tomates confites, chèvre frais, huile de basilic et pousses.",
+    "composition": "Pain levain, tomates confites, fromage de chèvre, huile de basilic, pousses",
+    "allergens": ["gluten", "lait"]
+  },
+  {
+    "productId": "salade",
+    "language": "en",
+    "name": "Marais Market Salad",
+    "description": "Seasonal greens, citrus segments, toasted seeds, chèvre, and verjus vinaigrette.",
+    "composition": "Greens, citrus, seeds, goat cheese, verjus vinaigrette",
+    "allergens": ["seeds", "milk"]
+  },
+  {
+    "productId": "salade",
+    "language": "fr",
+    "name": "Salade du Marché du Marais",
+    "description": "Verdure de saison, agrumes, graines toastées, chèvre et vinaigrette au verjus.",
+    "composition": "Verdure, agrumes, graines, fromage de chèvre, vinaigrette au verjus",
+    "allergens": ["graines", "lait"]
+  },
+  {
+    "productId": "chocolat_chaud",
+    "language": "en",
+    "name": "Old-World Hot Chocolate",
+    "description": "Thick Valrhona chocolate with steamed milk and Tahitian vanilla.",
+    "composition": "Valrhona chocolate, milk, vanilla",
+    "allergens": ["milk"],
+    "modifiers": [
+      {
+        "id": "milk",
+        "label": "Milk preference",
+        "options": [
+          { "id": "whole", "label": "Whole milk" },
+          { "id": "oat", "label": "Oat milk" },
+          { "id": "almond", "label": "Almond milk" }
+        ]
+      },
+      {
+        "id": "toppings",
+        "label": "Toppings",
+        "helper": "Select any",
+        "options": [
+          { "id": "chantilly", "label": "Chantilly cream" },
+          { "id": "cacao", "label": "Cocoa nibs" },
+          { "id": "guimauve", "label": "Vanilla marshmallows" }
+        ]
+      }
+    ]
+  },
+  {
+    "productId": "chocolat_chaud",
+    "language": "fr",
+    "name": "Chocolat chaud à l'ancienne",
+    "description": "Chocolat Valrhona onctueux avec lait vapeur et vanille tahitienne.",
+    "composition": "Chocolat Valrhona, lait, vanille",
+    "allergens": ["lait"],
+    "modifiers": [
+      {
+        "id": "milk",
+        "label": "Choix du lait",
+        "options": [
+          { "id": "whole", "label": "Lait entier" },
+          { "id": "oat", "label": "Lait d’avoine" },
+          { "id": "almond", "label": "Lait d’amande" }
+        ]
+      },
+      {
+        "id": "toppings",
+        "label": "Garnitures",
+        "helper": "Au choix",
+        "options": [
+          { "id": "chantilly", "label": "Chantilly" },
+          { "id": "cacao", "label": "Éclats de cacao" },
+          { "id": "guimauve", "label": "Guimauves" }
+        ]
+      }
+    ]
+  },
+  {
+    "productId": "iced_latte",
+    "language": "en",
+    "name": "Iced Canal Latte",
+    "description": "Slow-melt cubes, espresso, and vanilla bean syrup over milk of your choice.",
+    "composition": "Espresso, milk, demerara syrup, ice",
+    "allergens": ["milk"],
+    "modifiers": [
+      {
+        "id": "size",
+        "label": "Pick a size",
+        "options": [
+          { "id": "medium", "label": "Medium" },
+          { "id": "grand", "label": "Grande" }
+        ]
+      },
+      {
+        "id": "milk",
+        "label": "Milk",
+        "options": [
+          { "id": "whole", "label": "Whole" },
+          { "id": "oat", "label": "Oat" },
+          { "id": "soy", "label": "Soy" }
+        ]
+      },
+      {
+        "id": "sweetness",
+        "label": "Sweetness",
+        "helper": "Adjust syrup level",
+        "options": [
+          { "id": "unsweet", "label": "Unsweetened" },
+          { "id": "light", "label": "Lightly sweet" },
+          { "id": "classic", "label": "Classic" }
+        ]
+      }
+    ]
+  },
+  {
+    "productId": "iced_latte",
+    "language": "fr",
+    "name": "Latte glacé du Canal",
+    "description": "Glaçons maison, espresso et sirop vanille servis avec le lait de votre choix.",
+    "composition": "Espresso, lait, sirop demerara, glace",
+    "allergens": ["lait"],
+    "modifiers": [
+      {
+        "id": "size",
+        "label": "Choisissez la taille",
+        "options": [
+          { "id": "medium", "label": "Moyen" },
+          { "id": "grand", "label": "Grand" }
+        ]
+      },
+      {
+        "id": "milk",
+        "label": "Lait",
+        "options": [
+          { "id": "whole", "label": "Entier" },
+          { "id": "oat", "label": "Avoine" },
+          { "id": "soy", "label": "Soja" }
+        ]
+      },
+      {
+        "id": "sweetness",
+        "label": "Sucre",
+        "helper": "Ajustez le sirop",
+        "options": [
+          { "id": "unsweet", "label": "Sans sucre" },
+          { "id": "light", "label": "Peu sucré" },
+          { "id": "classic", "label": "Classique" }
+        ]
+      }
+    ]
+  },
+  {
+    "productId": "baguette_sandwich",
+    "language": "en",
+    "name": "Canal Market Baguette",
+    "description": "Country baguette with jambon de Paris, salted butter, and pickled cornichons.",
+    "composition": "Wheat baguette, ham, butter, cornichons",
+    "allergens": ["gluten", "milk"]
+  },
+  {
+    "productId": "baguette_sandwich",
+    "language": "fr",
+    "name": "Baguette du marché du Canal",
+    "description": "Baguette de campagne, jambon de Paris, beurre salé et cornichons.",
+    "composition": "Baguette de blé, jambon, beurre, cornichons",
+    "allergens": ["gluten", "lait"]
+  },
+  {
+    "productId": "pistache_eclair",
+    "language": "en",
+    "name": "Pistachio-Praliné Éclair",
+    "description": "Choux pastry filled with pistachio mousseline and caramelized nuts.",
+    "composition": "Wheat flour, butter, eggs, pistachio, sugar",
+    "allergens": ["gluten", "milk", "eggs", "nuts"]
+  },
+  {
+    "productId": "pistache_eclair",
+    "language": "fr",
+    "name": "Éclair pistache praliné",
+    "description": "Pâte à choux garnie de mousseline pistache et fruits secs caramélisés.",
+    "composition": "Farine de blé, beurre, œufs, pistache, sucre",
+    "allergens": ["gluten", "lait", "œufs", "fruits à coque"]
+  }
+]

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Café du Canal — Online Ordering</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="language-switcher" id="language-switcher">
+      <button
+        type="button"
+        class="language-switcher__toggle"
+        id="language-toggle-button"
+        aria-haspopup="dialog"
+        aria-expanded="false"
+        aria-controls="language-panel"
+        aria-labelledby="language-selector-label"
+      >
+        <span id="language-selector-label" class="visually-hidden">Language</span>
+        <div class="language-switcher__details">
+          <span class="language-switcher__hint" id="language-current-hint">Language</span>
+          <strong id="language-current-label">English</strong>
+        </div>
+        <span class="language-switcher__code" id="language-current-code">EN</span>
+        <span class="language-switcher__chevron" aria-hidden="true">⌄</span>
+      </button>
+      <div class="language-switcher__panel" id="language-panel" hidden>
+        <label class="language-switcher__search" for="language-search" id="language-search-label">Search languages</label>
+        <input
+          type="search"
+          id="language-search"
+          placeholder="Search languages or keywords"
+          autocomplete="off"
+        />
+        <p class="language-switcher__helper" id="language-helper">
+          English &amp; French are fully translated today. More languages coming soon.
+        </p>
+        <div class="language-switcher__options" id="language-options" role="listbox"></div>
+        <p class="language-switcher__empty" id="language-empty" hidden>No matches found.</p>
+      </div>
+    </div>
+
+    <div class="preference-overlay is-visible" id="preference-overlay" role="dialog" aria-modal="true">
+      <div class="preference-card">
+        <p class="eyebrow" id="preference-eyebrow">Plan your visit</p>
+        <h2 id="preference-heading">How can we prepare your order?</h2>
+        <div class="preference-group">
+          <p id="preference-dine-label">Where will you enjoy it?</p>
+          <div class="preference-options">
+            <button
+              type="button"
+              class="preference-option"
+              data-preference-group="dine"
+              data-preference-value="eatIn"
+            >
+              <span class="preference-emoji" aria-hidden="true">🍽️</span>
+              <span id="preference-eat-in">Eat in</span>
+            </button>
+            <button
+              type="button"
+              class="preference-option"
+              data-preference-group="dine"
+              data-preference-value="takeOut"
+            >
+              <span class="preference-emoji" aria-hidden="true">🥡</span>
+              <span id="preference-take-out">Take away</span>
+            </button>
+          </div>
+        </div>
+        <div class="preference-group">
+          <p id="preference-timing-label">When should we prepare it?</p>
+          <div class="preference-options">
+            <button
+              type="button"
+              class="preference-option"
+              data-preference-group="timing"
+              data-preference-value="now"
+            >
+              <span class="preference-emoji" aria-hidden="true">⚡</span>
+              <span id="preference-now">Now</span>
+            </button>
+            <button
+              type="button"
+              class="preference-option"
+              data-preference-group="timing"
+              data-preference-value="later"
+            >
+              <span class="preference-emoji" aria-hidden="true">🕰️</span>
+              <span id="preference-later">Later</span>
+            </button>
+          </div>
+          <p class="preference-warning" id="later-warning" hidden>
+            <span aria-hidden="true">⚠️</span>
+            <span id="preference-later-note">Later pick-ups are not guaranteed.</span>
+          </p>
+        </div>
+        <div class="preference-group preference-time" id="preference-time-group" hidden>
+          <p id="preference-time-label">Choose a time today</p>
+          <p class="preference-hint" id="preference-time-hint">Pick a 15-minute slot after the current time.</p>
+          <div class="time-slot-options" id="time-slot-options" role="listbox"></div>
+          <p class="preference-warning" id="time-slot-empty" hidden>
+            <span aria-hidden="true">ℹ️</span>
+            <span id="time-slot-empty-text">No slots remain today.</span>
+          </p>
+          <p class="preference-warning preference-warning--error" id="time-slot-error" hidden>
+            <span aria-hidden="true">⚠️</span>
+            <span id="time-slot-error-text">Please pick a time to continue.</span>
+          </p>
+        </div>
+        <button type="button" class="primary preference-cta" id="preference-cta">Start order</button>
+      </div>
+    </div>
+
+    <header class="hero">
+      <div>
+        <p class="eyebrow" id="hero-eyebrow">Café du Canal · Paris 10e</p>
+        <h1 id="hero-heading">Digital ordering that feels as warm as our dining room.</h1>
+        <p class="lead" id="hero-lead">
+          Browse our menu, review allergen details, and pay with Apple Pay, credit card, or PayPal.
+          Orders drop straight into the sales ledger used across every channel.
+        </p>
+        <div class="hero-actions">
+          <span class="hours" id="hero-hours">Open today until 19h00</span>
+        </div>
+      </div>
+      <div class="hero-card">
+        <p class="hero-card__title" id="hero-sales-title">Sales snapshot</p>
+        <p class="hero-card__value" id="sales-total">€0</p>
+        <p class="hero-card__meta" id="sales-meta">0 orders today</p>
+        <div class="payment-breakdown" id="payment-breakdown"></div>
+      </div>
+    </header>
+
+    <main>
+      <section>
+        <h2 id="menu-heading">Menu</h2>
+        <div id="menu-grid" class="menu-grid" aria-live="polite"></div>
+      </section>
+
+      <section class="order-panel">
+        <div>
+          <aside class="preference-summary" id="preference-summary" hidden>
+            <p class="preference-summary__title" id="preference-summary-title">Service preference</p>
+            <p class="preference-summary__value">
+              <span id="preference-summary-dine">Eat in</span>
+              <span aria-hidden="true">·</span>
+              <span id="preference-summary-time">Serve now</span>
+            </p>
+            <button type="button" class="preference-summary__change" id="preference-summary-change">Change</button>
+          </aside>
+          <section class="account-panel" id="account-panel">
+            <div class="account-panel__intro">
+              <h3 id="account-heading">Account</h3>
+              <p id="account-helper">Create an account to track your orders and loyalty rewards.</p>
+            </div>
+            <label class="account-panel__select">
+              <span id="account-select-label">Select a user</span>
+              <select id="account-select">
+                <option value="">Guest checkout</option>
+              </select>
+            </label>
+            <p class="account-panel__status" id="account-status">No account selected.</p>
+            <div class="account-panel__loyalty" id="account-loyalty" hidden>
+              <p class="account-panel__loyalty-title" id="account-loyalty-title">Loyalty progress</p>
+              <p id="account-loyalty-progress"></p>
+              <p class="account-panel__loyalty-note" id="account-loyalty-eligible" hidden>
+                Reward unlocked! Enjoy a complimentary drink on your next order.
+              </p>
+            </div>
+            <div class="account-panel__history" id="account-history" hidden>
+              <p class="account-panel__history-title" id="account-history-title">Recent orders</p>
+              <ul id="account-history-list"></ul>
+              <p id="account-history-empty">No orders recorded yet.</p>
+            </div>
+            <form id="username-account-form" class="account-form">
+              <h4 id="account-create-username">Create username account</h4>
+              <label>
+                <span id="account-username-label">Username (min 6 characters)</span>
+                <input type="text" name="username" minlength="6" required />
+              </label>
+              <label>
+                <span id="account-password-label">Password</span>
+                <input type="password" name="password" minlength="8" required />
+              </label>
+              <button type="submit" class="secondary" id="account-username-submit">Register</button>
+            </form>
+            <form id="email-account-form" class="account-form">
+              <h4 id="account-create-email">Create email + passkey account</h4>
+              <label>
+                <span id="account-email-label">Email address</span>
+                <input type="email" name="email" required />
+              </label>
+              <label>
+                <span id="account-passkey-label">Passkey nickname</span>
+                <input type="text" name="passkeyLabel" required />
+              </label>
+              <label>
+                <span id="account-passkey-public-label">Passkey public key (simulated)</span>
+                <input type="text" name="passkeyPublicKey" required />
+              </label>
+              <button type="submit" class="secondary" id="account-email-submit">Register</button>
+            </form>
+            <p class="account-panel__feedback" id="account-feedback" role="status"></p>
+          </section>
+          <h2 id="cart-heading">Your selection</h2>
+          <div id="cart" class="cart"></div>
+          <div class="cart-total">
+            <span id="cart-count">0 items</span>
+            <strong id="cart-total">€0.00</strong>
+          </div>
+        </div>
+        <form id="order-form" class="order-form">
+          <h3 id="guest-details-heading">Guest details</h3>
+          <label>
+            <span id="label-name">Name</span>
+            <input type="text" name="customerName" required />
+          </label>
+          <label>
+            <span id="label-contact">Contact (email or phone)</span>
+            <input type="text" name="contact" />
+          </label>
+
+          <h3 id="payment-heading">Payment</h3>
+          <div class="payment-options">
+            <label>
+              <input type="radio" name="payment" value="applePay" checked /> Apple Pay
+            </label>
+            <label>
+              <input type="radio" name="payment" value="creditCard" /> Credit card
+            </label>
+            <label>
+              <input type="radio" name="payment" value="paypal" /> PayPal
+            </label>
+          </div>
+
+          <div id="payment-details" class="payment-details"></div>
+
+          <button type="submit" class="primary" id="submit-order" disabled>
+            Place order
+          </button>
+          <p class="form-status" id="form-status" role="status"></p>
+        </form>
+      </section>
+
+      <section>
+        <h2 id="ledger-heading">Ledger activity</h2>
+        <div id="ledger" class="ledger"></div>
+      </section>
+    </main>
+
+    <div class="customization-modal" id="customization-modal" aria-hidden="true">
+      <div class="customization-modal__backdrop" id="customization-backdrop"></div>
+      <div
+        class="customization-modal__card"
+        id="customization-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="customization-title"
+      >
+        <button type="button" class="customization-modal__close" id="customization-close" aria-label="Close">
+          ✕
+        </button>
+        <p class="eyebrow" id="customization-eyebrow">Personalize it</p>
+        <h2 id="customization-title">Personalize your order</h2>
+        <p id="customization-description"></p>
+        <p class="customization-modal__price" id="customization-price">Current price: €0.00</p>
+        <div id="customization-options"></div>
+        <p class="customization-modal__error" id="customization-error"></p>
+        <div class="customization-modal__quantity">
+          <span id="customization-quantity-label">Quantity</span>
+          <div class="quantity-control">
+            <button type="button" id="customization-quantity-decrease" aria-label="Decrease quantity">−</button>
+            <span id="customization-quantity-value">1</span>
+            <button type="button" id="customization-quantity-increase" aria-label="Increase quantity">+</button>
+          </div>
+        </div>
+        <button type="button" class="primary customization-modal__submit" id="customization-submit">
+          Add to order
+        </button>
+      </div>
+    </div>
+
+    <footer>
+      <p>© <span id="year"></span> Café du Canal · 17 Quai de Valmy · Paris</p>
+    </footer>
+
+    <div class="mobile-toolbar mobile-toolbar--hidden" id="mobile-toolbar" aria-live="polite">
+      <button type="button" class="mobile-toolbar__summary" id="mobile-cart-toggle">
+        <div>
+          <span id="mobile-toolbar-label">0 items</span>
+          <span id="mobile-toolbar-hint" class="mobile-toolbar__hint">View cart</span>
+        </div>
+        <strong id="mobile-toolbar-total">€0.00</strong>
+      </button>
+      <button type="button" class="mobile-toolbar__checkout" id="mobile-checkout">Go to payment</button>
+    </div>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>
